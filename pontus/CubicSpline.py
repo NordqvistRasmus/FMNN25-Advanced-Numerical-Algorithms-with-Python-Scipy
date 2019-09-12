@@ -20,8 +20,12 @@ class CubicSpline:
     def spanIntervall(u):
         #Finds inceses of where array is nonzero
         #uNonZeroIndeces = np.where(u != 0)[0]
+        #Removes zeros from u
         uSpan=[l for l in u if l!=0]
         return uSpan
+    
+    def blossom(uHot, d):
+        globalD = 
     
     def alpha(u):
         uSpan=spanIntervall(u)
