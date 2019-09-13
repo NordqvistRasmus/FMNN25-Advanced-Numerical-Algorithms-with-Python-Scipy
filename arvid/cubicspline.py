@@ -50,6 +50,7 @@ class CubicSpline:
         blossoms = alphas*blossoms[0] + (1-alphas)*blossoms[1]
         
         return blossoms
+<<<<<<< HEAD
     
     def basis_function(self, knots, i):
         def basis(u,i, k):
@@ -78,6 +79,8 @@ class CubicSpline:
                 
             
             
+=======
+>>>>>>> c6e8e6fdb063efc6dd40ce15c00e0c9374d038d7
         
 KNOTS = array([0.  , 0.  , 0.  , 0.12, 0.16, 0.2 , 0.24, 0.28, 0.32, 0.36, 0.4 ,
        0.44, 0.48, 0.52, 0.56, 0.6 , 0.64, 0.68, 0.72, 0.76, 0.8 , 0.84,
