@@ -23,7 +23,7 @@ class CubicSpline:
     
     def plot(self, plot_poly = True):
         
-        points = array([self.point_eval(point) for point in self.knots[1:23]])
+        points = array([self.point_eval(point) for point in linspace(0,1,150)])
         print(points)
         plot(points[:,0],points[:,1])
         if plot_poly:
@@ -34,7 +34,7 @@ class CubicSpline:
 #            raise ValueError(f"""u = {u} is not contained in
 #                             the grid [{self.grid_u[0]}, {self.grid_u[-1]}]
 #                             """)
-        indx = int(self.knots.searchsorted([u]))
+        indx = int(self.knots.searchsorted([u]))-1
         blossoms = array([self.control[i] for i in range(indx-2, indx+2)])
         knots = array([self.knots[i] for i in range(indx-2, indx+4)])
         
@@ -50,6 +50,34 @@ class CubicSpline:
         blossoms = alphas*blossoms[0] + (1-alphas)*blossoms[1]
         
         return blossoms
+    
+    def basis_function(self, knots, i):
+        def basis(u,i, k):
+            if k == 0:
+                if knots[i-1] == knots[i]:
+                    return 0
+                elif knots[i-1] <= u < knots[i]:
+                    return 1
+                else:
+                    return 0
+            else:
+                if knots[i+k-1] == knots[i-1] and u == knots[i-1]:
+                    coeff1 = 0
+                else:
+                    coeff1 = (u - knots[i-1])/(knots[i+k-1]-knots[i-1])
+                if knots[i+k] == knots[i] and u == knots[i+k]:
+                    coeff2 = 0
+                else:
+                    coeff2 = (knots[i+k] - u)/(knots[i+k] - knots[i])
+                
+                return basis(u, i, k-1)*coeff1 + basis(u, i+1, k-1)*coeff2
+        def j_basis(u):
+            return basis(u, i, 3)
+            
+        return j_basis
+                
+            
+            
         
 KNOTS = array([0.  , 0.  , 0.  , 0.12, 0.16, 0.2 , 0.24, 0.28, 0.32, 0.36, 0.4 ,
        0.44, 0.48, 0.52, 0.56, 0.6 , 0.64, 0.68, 0.72, 0.76, 0.8 , 0.84,
