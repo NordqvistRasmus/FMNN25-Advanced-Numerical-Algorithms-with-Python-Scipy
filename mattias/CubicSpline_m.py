@@ -18,13 +18,11 @@ class CubicSpline:
             print("No input grid, set default:", self.knots)
         self.knots.sort()
         print("Knots:", self.knots)
-        self.u_vector = self.addClamp(self.knots)
+        self.u_vector = self.addClamp(self.knots) 
         print("Clamped knots:", self.knots)
         print("Control point vector:", cp)
     
-    """
-    Input: Point u to evaluate, I is hot index
-    """
+   
     
 
     
@@ -37,11 +35,11 @@ class CubicSpline:
     Sort, add clamp (padding), and evaluate every u in u_vector
     num - number of u to evaluate, increases precision. 
     """
-    def __call__(self, num): #grid vector as parameter?
+    def __call__(self, num): 
         u_vector = linspace(self.knots[0], self.knots[-1], num)
         result = empty(len(u_vector)) #prep for input
     
-        for i,u in enumerate(u_vector): #input count, element 
+        for i,u in enumerate(u_vector): #input: count, element 
             I = (u < self.knots).argmax()
             print("Count:" , i, " Hot Index:" , I, "Value: ", u)
             result[i] = self.evaluateAt(u, I) #store result in resultvector
@@ -49,6 +47,8 @@ class CubicSpline:
     
     """
     Here we run the algoritm for evaluating the spline
+    Input: Point u to evaluate, I is hot index. 
+    (u is 'many' points between first and last knot so we can plot u as 'x' and evaluated points as 'y')
     """
     def evaluateAt(self, u, I): 
         return None
@@ -59,8 +59,18 @@ class CubicSpline:
     def plot(self):
         plt.plot(self.cp[:,0], self.cp[:,1], '-.*') 
         plt.plot(self.u_vector, zeros(len(self.u_vector)), '.')
+        
+        #Plot evaluated points (y) with all u's 
         plt.show()
 
+"""
+Run code to test
+"""
+grid = array([1, 3, 5, 7, 8, 9]) # K = .. , OPTIONAL
+cp = array([[1, 3], [3.5, 8], [5, 4],[5.4, 5],[6.6, 2], [7, 4], [8, 3]]) # L = K - 2 = 8
 
+s = CubicSpline(cp)
+res = s(50)
 
+s.plot()
 

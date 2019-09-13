@@ -12,6 +12,7 @@ class CubicSpline:
     
     
     def __init__(self, knots, control):
+        #self.knots = r_[knots[0], knots[0], knots, knots[-1], knots[-1]]
         self.knots = knots
         self.knots.sort()
         control = array(control)
@@ -21,11 +22,12 @@ class CubicSpline:
         pass
     
     def plot(self, plot_poly = True):
-        grid = linspace(self.grid_u[0], self.grid_u[-1],10)
-        points = array([self.point_eval(point) for point in grid])
+        
+        points = array([self.point_eval(point) for point in self.knots[1:23]])
+        print(points)
         plot(points[:,0],points[:,1])
         if plot_poly:
-            plot(self.control_d[:,0],self.control_d[:,1], 'yx--')
+            plot(self.control[:,0],self.control[:,1], 'yx--')
     
     def point_eval(self, u):
 #        if u < self.grid_u[0] or u > self.grid_u[-1]:
@@ -33,7 +35,6 @@ class CubicSpline:
 #                             the grid [{self.grid_u[0]}, {self.grid_u[-1]}]
 #                             """)
         indx = int(self.knots.searchsorted([u]))
-        print(indx)
         blossoms = array([self.control[i] for i in range(indx-2, indx+2)])
         knots = array([self.knots[i] for i in range(indx-2, indx+4)])
         
@@ -53,6 +54,8 @@ class CubicSpline:
 KNOTS = array([0.  , 0.  , 0.  , 0.12, 0.16, 0.2 , 0.24, 0.28, 0.32, 0.36, 0.4 ,
        0.44, 0.48, 0.52, 0.56, 0.6 , 0.64, 0.68, 0.72, 0.76, 0.8 , 0.84,
        0.88, 1.  , 1.  , 1.  ])
+    
+ 
 CONTROL = [(-12.73564, 9.03455),
  (-26.77725, 15.89208),
  (-42.12487, 20.57261),
@@ -80,7 +83,8 @@ CONTROL = [(-12.73564, 9.03455),
 
 if __name__ == '__main__':
     c = CubicSpline(KNOTS, CONTROL)
-    c.point_eval(0.2)  
+    print(c.point_eval(0.2))  
+    c.plot()
         
         
     
