@@ -23,7 +23,7 @@ class CubicSpline:
     
     def plot(self, plot_poly = True):
         
-        points = array([self.point_eval(point) for point in self.knots[1:23]])
+        points = array([self.point_eval(point) for point in linspace(0,1,150)])
         print(points)
         plot(points[:,0],points[:,1])
         if plot_poly:
@@ -34,7 +34,7 @@ class CubicSpline:
 #            raise ValueError(f"""u = {u} is not contained in
 #                             the grid [{self.grid_u[0]}, {self.grid_u[-1]}]
 #                             """)
-        indx = int(self.knots.searchsorted([u]))
+        indx = int(self.knots.searchsorted([u]))-1
         blossoms = array([self.control[i] for i in range(indx-2, indx+2)])
         knots = array([self.knots[i] for i in range(indx-2, indx+4)])
         
