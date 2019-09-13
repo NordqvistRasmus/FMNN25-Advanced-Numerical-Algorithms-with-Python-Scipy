@@ -1,0 +1,103 @@
+import numpy
+import matplotlib.pyplot
+
+class CubicSpline(object):
+
+    def __init__(self,deBoorPoints,KnotSeq):
+
+        self.deBoorPoints = deBoorPoints
+        self.KnotSeq = KnotSeq
+
+    def __call__(self,u):
+
+        self.u = u        
+        self.s_u = self.deBoorsAlgo(u)
+        
+        return self.s_u
+  
+    def deBoorsAlgo(self,u):
+
+        
+        xVal = numpy.zeros(len(u))
+
+        yVal = numpy.zeros(len(u))
+ 
+        
+        for i in range(0,len(u)):
+
+            index = self.FirstIndex(u[i])
+        
+            xVal[i] = self.Blossom(u[i],3,index,0)
+
+            yVal[i] = self.Blossom(u[i],3,index,1)
+          
+        return numpy.array([xVal,yVal])
+
+    def Blossom(self,x, rank, i,xy):
+        if rank == 0:
+            return self.deBoorPoints[xy,i-2]
+        if self.KnotSeq[i+1] == self.KnotSeq[i+rank-3]:
+            dleft = 0
+        else:
+            alfa=(self.KnotSeq[i+1] - x)/(self.KnotSeq[i+1] - self.KnotSeq[i+rank-3])
+            dleft = alfa * self.Blossom(x, rank-1, i,xy)
+        if self.KnotSeq[i+1] == self.KnotSeq[i+rank-3]:
+              dright = 0
+        else:
+            alfa=(self.KnotSeq[i+1] - x)/(self.KnotSeq[i+1] - self.KnotSeq[i+rank-3])
+            dright = (1-alfa)* self.Blossom(x, rank-1, i+1,xy)
+        return dleft + dright
+        
+
+    def FirstIndex(self,u):
+
+        return (self.KnotSeq > u).argmax()-1
+ 
+
+    def plot(self):
+        
+        
+        xValues = self.s_u[0]
+        yValues = self.s_u[1]
+        matplotlib.pyplot.figure()
+        
+        matplotlib.pyplot.plot(xValues,yValues,'k')
+        
+        matplotlib.pyplot.plot(self.deBoorPoints[0],self.deBoorPoints[1],'r--')
+        matplotlib.pyplot.show()
+        
+
+def main():
+   
+    
+    deBoorPoints = numpy.array([[-8.1, -7.1, -2.8, -2.3,  1.0,
+
+         2.4,  1.8,  -5.8,  -6.9,  -7.4, -8.4],
+
+       [ 4.1, -2.4,  5.7, -2.7,  8.2,
+
+        -3.6,  6.5, -0.3,  7.4 , -3.9, -6.9 ]])
+  
+    deBoorPoints = numpy.array([[-12.73564, -26.77725, -42.12487, -15.34799, -31.72987,-49.14568,-38.09753,-67.92234,-89.47453,-21.44344,
+                              -32.16513,-32.16511,-2e-05,10.72167,21.55219,32.16511,51.377,89.47453,15.89191,30.9676,45.22709,14.36797,27.59321,39.67575],
+
+       [9.03455, 15.89208,  20.57261, 4.57169,  6.85753,6.85754, -1e-05, -11.10268, -33.30804, -22.31416, -53.33632, -93.06657,-39.83887, -70.86103
+        , -93.06658,-22.31397, -33.47106, -33.47131, 0.00025, 1.95954, 5.87789, 3.91883, 9.68786, 17.30712]])
+
+    KnotSeq = numpy.linspace(0, 1, 26)
+    KnotSeq[ 1] = KnotSeq[ 2] = KnotSeq[ 0]
+    KnotSeq[-3] = KnotSeq[-2] = KnotSeq[-1]
+    u = numpy.linspace(0,0.999,1000)
+
+    Values = CubicSpline(deBoorPoints,KnotSeq)
+
+    Values(u)
+
+    Values.plot()
+
+
+main()
+
+
+
+
