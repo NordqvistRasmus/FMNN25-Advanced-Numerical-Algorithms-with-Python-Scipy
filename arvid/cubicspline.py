@@ -55,7 +55,7 @@ class CubicSpline:
     def basis_function(self, knots, i):
         
         def basis(u, i, k):
-            i += 1      # To compensate for the clamping of the knots.
+            
             if k == 0:
                 if knots[i-1] == knots[i]:
                     return 0
