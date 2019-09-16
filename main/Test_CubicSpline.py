@@ -44,7 +44,7 @@ class Test_CubicSpline(unittest.TestCase):
         self.KNOTS[ 1] = self.KNOTS[ 2] = self.KNOTS[ 0]
         self.KNOTS[-3] = self.KNOTS[-2] = self.KNOTS[-1]
         
-        cs = CubicSpline(self.KNOTS, self.CONTROL)
+        self.cs = CubicSpline(self.KNOTS, self.CONTROL)
     
     def tearDown(self):
         CONTROL = None
@@ -52,7 +52,7 @@ class Test_CubicSpline(unittest.TestCase):
     
     def test_exampleTest(self):
 
-        result = cs.point_eval(0.2)
+        result = self.cs.point_eval(0.2)
         expected = array([-31.90219167, 6.47655833])
 
         self.assertAlmostEqual(result[0],expected[0])
@@ -75,9 +75,10 @@ class Test_CubicSpline(unittest.TestCase):
     
     def test_null(self):
         self.tearDown()
-        cs = CubicSpline(self.KNOTS, self.CONTROL)
+        csNew = CubicSpline(self.KNOTS, self.CONTROL)
         with self.assertRaises(TypeError):
-            cs.point_eval(0.2)
+            #cs.point_eval(0.2)
+            csNew(0.2)
     
     """
     Uppg 4
@@ -121,18 +122,15 @@ class Test_CubicSpline(unittest.TestCase):
     def test_basisFunctionPositive(self):
         positiveValue = True
         
-        bases = [c.basis_function(KNOTS,i) for i in range(len(KNOTS))]
+        bases = [self.cs.basis_function(self.KNOTS,i) for i in range(len(self.KNOTS))]
         
-        for i in range(0,len(KNOTS)-4):
+        for i in range(0,len(self.KNOTS)-4):
             for j in linspace(0,1,200):
 
-                positiveValue = bases[i](j) > 0
-                
-                if bases[i](j) == -0.0:
-                    positiveValue = True
-                    
+                if bases[i](j) != -0.0:
+                    positiveValue = bases[i](j) > 0 
+
                 if positiveValue == False:
-                    #print(bases[i](j))
                     break
                 
         self.assertTrue(positiveValue)
