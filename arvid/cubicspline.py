@@ -8,17 +8,19 @@ Created on Wed Sep 11 14:42:55 2019
 from scipy import *
 from matplotlib.pyplot import *
 
+
 class CubicSpline:
     
     
-    def __init__(self, knots, control):
+    def __init__(self, knots, control = None, interpol_points = None,
+                 interpolate = False):
         #self.knots = r_[knots[0], knots[0], knots, knots[-1], knots[-1]]
         self.knots = knots
         self.knots.sort()
         control = array(control)
         self.control = control
         
-    def __call__(self):
+    def __call__(self, knots, control = None, interpol_points = None):
         pass
     
     def plot(self, plot_poly = True):
@@ -52,7 +54,8 @@ class CubicSpline:
         return blossoms
 
     
-    def basis_function(self, knots, i):
+    def basis_function(self, knots, i): 
+         # Because of padding we want to remove the first and last 2 elements in knots
         
         def basis(u, i, k):
             
@@ -74,17 +77,36 @@ class CubicSpline:
                     coeff2 = (knots[i+k] - u)/(knots[i+k] - knots[i])
                 
                 return basis(u, i, k-1)*coeff1 + basis(u, i+1, k-1)*coeff2
-        def j_basis(u):
-            return basis(u, i, 3)
-            
-        return j_basis
-
-
-if __name__ == '__main__':
-    c = CubicSpline(KNOTS, CONTROL)
-    print(c.point_eval(0.2))  
-    c.plot()
+#        def j_basis(u):
+#            return basis(u, i, 3)   # Write as lambda instead
+#                                    # lambda u: basis(u,i,3)
+        return lambda u: basis(u, i, 3)
+    
+    def interpolate(self, interpol_points):
+        x_points = interpol_points[:,0]
+        y_points = interpol_points[:,1]
+        bases = [self.basis_function(self.knots, i)
+                 for i in range(len(self.knots - 2))]
         
+
+
+#if __name__ == '__main__':
+#    c = CubicSpline(KNOTS, CONTROL)
+#    print(c.point_eval(0.2))  
+#    c.plot()
+#        
+        
+if __name__ == '__main__':
+    
+    KNOTS = array([0.  , 0.  , 0.  , 0.12, 0.16, 0.2 , 0.24, 0.28, 0.32, 0.36, 0.4 ,
+       0.44, 0.48, 0.52, 0.56, 0.6 , 0.64, 0.68, 0.72, 0.76, 0.8 , 0.84,
+       0.88, 1.  , 1.  , 1.  ])
+            
+    c = CubicSpline(KNOTS)
+    
+    basis = [c.basis_function(KNOTS, i) for i in range(len(KNOTS)-2)]
+    X = linspace(0, 1, 200)
+    Y = array([[N(x) for x in X] for N in basis])
         
     
         
