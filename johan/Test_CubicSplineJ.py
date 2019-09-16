@@ -8,7 +8,7 @@ from  pylab import *
 
 
 import unittest
-from CubicSpline import CubicSpline
+from cubicspline import CubicSpline
 
 import random
 
@@ -16,7 +16,7 @@ import random
 
 class TestCubicSpline(unittest.TestCase):
     def setUp(self):
-        cp = [(-12.73564, 9.03455),
+        self.cp = [(-12.73564, 9.03455),
               (-26.77725, 15.89208),
               (-42.12487, 20.57261),
               (-15.34799, 4.57169),
@@ -40,7 +40,7 @@ class TestCubicSpline(unittest.TestCase):
               (14.36797, 3.91883),
               (27.59321, 9.68786),
               (39.67575, 17.30712)]
-        knots = linspace(0, 1, 26)
+        self.knots = linspace(0, 1, 26)
     
     def test_almostEqual(self):
         s = CubicSpline(cp, knots = knots)
@@ -72,12 +72,34 @@ class TestCubicSpline(unittest.TestCase):
     def test_blossom(self):
         s = CubicSpline(cp, knots = knots)
         s.basis_function(knots, 0.2)
-        # summera basfunktionerna med rätt kontrollpunkter 
-        # result = "summerade värdet"
-        result = 123
+        bases = [s.basis_function(self.knots, i) for i in range(len(self.knots))]
+        bases_in_point = [N(0.2) for N in bases]
+        result = sum(bases_in_point)
         expected = s(0.2)
         self.assertAlmostEqual(result[0], expected[0])
         self.assertAlmostEqual(result[1], expected[1])
+        
+    def test_basis_sum(self):
+        s = CubicSpline(cp, knots = knots)
+        bases = [s.basis_function(self.knots, i) for i in range(len(self.knots))]
+        x = linspace(0,1, 200)
+        y = [[N(val) for val in x] for N in bases]
+        Y = zeros(1, len(x))
+        for element in y:
+            Y += element
+        self.assertEqual([y for y in Y], 1)
+        pass
+    
+    def test_padded(self):
+        s = CubicSpline(self.cp, self.knots)
+        checker_left = checker_right = False
+        if (s.knots[0] == s.knots[1] and s.knots[1] == s.knots[2]):
+            checker_left = True
+        if (s.knots[-1] == s.knots[-2] and s.knots[-2] == s.knots[-3]):
+            checker_right = True        
+        self.assertTrue(checker_left)
+        self.assertTrue(checker_right)
+        
         
     def tearDown(self):
         cp = None
@@ -87,5 +109,5 @@ class TestCubicSpline(unittest.TestCase):
 
             
         
-if _name__=='__main_':
+if __name__=='__main__':
     unittest.main()
