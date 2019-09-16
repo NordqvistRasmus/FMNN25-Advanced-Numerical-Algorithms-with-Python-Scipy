@@ -14,11 +14,13 @@ class TestCubicSpline(unittest.TestCase):
     
     #def setUP(self):
     
-    """    
-    def exampleTest(self):
+       
+    def test_exampleTest(self):
         #Can be cleaned up using txt file
         
-        CONTROL = [(-12.73564, 9.03455),(-26.77725, 15.89208),(-42.12487, 20.57261),
+        CONTROL = [(-12.73564, 9.03455),
+                   (-26.77725, 15.89208),
+                   (-42.12487, 20.57261),
                    (-15.34799, 4.57169),
                    (-31.72987, 6.85753),
                    (-49.14568, 6.85754),
@@ -41,21 +43,24 @@ class TestCubicSpline(unittest.TestCase):
                    (27.59321, 9.68786),
                    (39.67575, 17.30712)] 
         
-        CONTROL = [(0.,0.), (0.,0.)]
+        #CONTROL = [(0.,0.), (0.,0.)]
         KNOTS = linspace(0, 1, 26)
         KNOTS[ 1] = KNOTS[ 2] = KNOTS[ 0]
         KNOTS[-3] = KNOTS[-2] = KNOTS[-1]
         
-        c=CubicSpline(KNOTS, CONTROL)
+        c = CubicSpline(KNOTS, CONTROL)
         result = c.point_eval(0.2)
+        #print(result)
         expected = array([-31.90219167, 6.47655833]) 
         #expected = array([-0.8, 6])
         
-        self.assertEqual(result , expected)
-        """
+        #self.assertAlmostEqual(result , expected)
+        self.assertAlmostEqual(result[0],expected[0])
+        self.assertAlmostEqual(result[1],expected[1])
+        
     #Test method to test unittest
-    def simpleMath(self):
-        self.assertEqual(5+9, 14)
+    #def test_simpleMath(self):
+     #  self.assertAlmostEqual(5+9, 14)
         
 if __name__ == '__main__':
     unittest.main()
