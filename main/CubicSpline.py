@@ -58,6 +58,9 @@ class CubicSpline:
     If no knot sequence is passed, the default will be a equidistant vector from 0 to 1.
     """
     def __init__(self, control, knots = None):
+        
+        if control is None:
+            raise TypeError('Control points are not defiened properly')
        
         if shape(control[0]) != (2,): #Exception for input shape
             raise ValueError('Control points are not two dimensional')

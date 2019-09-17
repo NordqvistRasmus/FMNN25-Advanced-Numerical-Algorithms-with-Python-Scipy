@@ -43,12 +43,15 @@ class Test_CubicSpline(unittest.TestCase):
         self.KNOTS = linspace(0, 1, 26)
         self.KNOTS[ 1] = self.KNOTS[ 2] = self.KNOTS[ 0]
         self.KNOTS[-3] = self.KNOTS[-2] = self.KNOTS[-1]
-        
-        self.cs = CubicSpline(self.KNOTS, self.CONTROL)
+        #
+        #
+        # OBS, fel ordning här på parametrarna, observera
+        self.cs = CubicSpline(self.CONTROL, self.KNOTS)
     
     def tearDown(self):
-        CONTROL = None
-        KNOTS = None
+        self.CONTROL = None
+        self.KNOTS = None
+        self.cs = None
     
     def test_exampleTest(self):
 
@@ -60,7 +63,7 @@ class Test_CubicSpline(unittest.TestCase):
 
     def test_order(self):
         random.shuffle(self.KNOTS)
-        cs = CubicSpline(self.KNOTS, self.CONTROL)
+        cs = CubicSpline(self.CONTROL, self.KNOTS)
         result = cs.point_eval(0.2)
         expected = array([-31.90219167, 6.47655833])
         self.assertAlmostEqual(result[0], expected[0])
@@ -74,14 +77,10 @@ class Test_CubicSpline(unittest.TestCase):
     
     def test_null(self):
         self.tearDown()
-        csNew = CubicSpline(self.KNOTS, self.CONTROL)
         with self.assertRaises(TypeError):
-            #cs.point_eval(0.2)
-            csNew(0.2)
+            csNew = CubicSpline(self.KNOTS, self.CONTROL)
+        
     
-    """
-    Uppg 4 - Funkar EJ!
-    """
     def test_blossom(self):
         self.cs.basis_function(self.KNOTS, 0.2)
         bases = [self.cs.basis_function(self.KNOTS, i) for i in range(len(self.KNOTS)-4)]
