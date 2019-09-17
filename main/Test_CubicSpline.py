@@ -80,20 +80,22 @@ class Test_CubicSpline(unittest.TestCase):
             csNew(0.2)
     
     """
-    Uppg 4
-    """
+    Uppg 4 - Funkar EJ!
     """
     def test_blossom(self):
-        #s = CubicSpline(cp, knots = knots)
         self.cs.basis_function(self.KNOTS, 0.2)
         bases = [self.cs.basis_function(self.KNOTS, i) for i in range(len(self.KNOTS)-4)]
         bases_in_point = array([N(0.2) for N in bases])
-        #Måste fixas 
+        cp = array(self.CONTROL[1:-1])
+        result = zeros(2)
+        for i in range(2):
+            for j in range(len(cp)):
+                result[i] += cp[j,i]*bases_in_point[j]
+        expected = self.cs.point_eval(0.2)
         self.assertAlmostEqual(result[0], expected[0])
         self.assertAlmostEqual(result[1], expected[1])
-    """
+        
     def test_padded(self):
-        #s = CubicSpline(self.cp, self.knots)
         checker_left = checker_right = False
         if (self.cs.knots[0] == self.cs.knots[1] and self.cs.knots[1] == self.cs.knots[2]):
             checker_left = True
@@ -103,7 +105,6 @@ class Test_CubicSpline(unittest.TestCase):
         self.assertTrue(checker_right)
 
     def test_basis_sum(self):
-        #s = CubicSpline(cp, knots = knots)
         bases = [self.cs.basis_function(self.KNOTS, i) for i in range(len(self.KNOTS)-4)]
         x = linspace(0,1, 200)
         y = [[N(val) for val in x] for N in bases]
