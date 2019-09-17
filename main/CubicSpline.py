@@ -19,11 +19,10 @@ class CubicSpline:
         self.control = control
         self.knots = knots
         self.knots.sort()
-#        control = array(control)
-#        self.control = control
-        
-    def __call__(self):
-        pass
+
+
+    def __call__(self, u):
+        return self.point_eval(u)
     
     def plot(self, plot_poly = True):
         
@@ -56,8 +55,7 @@ class CubicSpline:
         return blossoms
 
     
-    def basis_function(self, knots, i):
-        
+    def basis_function(self, knots, i):  
         def basis(u, i, k):
             if k == 0:
                 if knots[i-1] == knots[i]:
@@ -77,10 +75,7 @@ class CubicSpline:
                     coeff2 = (knots[i+k] - u)/(knots[i+k] - knots[i])
                 
                 return basis(u, i, k-1)*coeff1 + basis(u, i+1, k-1)*coeff2
-        def j_basis(u):
-            return basis(u, i, 3)
-            
-        return j_basis
+        return lambda u: basis(u, i, 3)
 
 
 if __name__ == '__main__':
