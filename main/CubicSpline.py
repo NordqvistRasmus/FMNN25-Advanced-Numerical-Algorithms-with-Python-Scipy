@@ -7,6 +7,7 @@ Created on Wed Sep 11 14:42:55 2019
 """
 from scipy import *
 from matplotlib.pyplot import *
+from timeit import default_timer as timer
 
 """
     CubicSpline
@@ -29,19 +30,24 @@ from matplotlib.pyplot import *
         If no knot sequence is passed, the default will be a equidistant vector from 0 to 1.
     
     __call__(u):
-        Returns the point 'u' evaluated with De Boords algorithm
+        See method point_eval(u). 
     
-    plot(plot_poly = True, precision = 150):
-        Calculates and plot points using De Boors algorithm. 
+    plot(u_i = None, plot_poly = True, precision = 150):
+        Calculates and plot points using De Boors algorithm.
         If 'plot_poly' is set True (default), then also plots the Control Points.  
         To increase plot resolution, increase 'precision' parameter.
         
+        u_i is used for Add-on task. Adds parts of the blossoms points to the plot. 
+        
     point_eval(u):
         Help method to method 'plot', used to evaluate point 'u' with the De Boors algorithm and calculate splines. 
-        
+        Input: A point 'u' to be evaluated, needs to be inside the knot sequence.
+        Return: Blossom point(in R^2) 
+            
     basis_fuction(knots, i):
         Takes a knot sequence 'knots' and index 'i' as input and returns a 
         python function to evaluate the i:th B-spline basis function. 
+        
     ------
     """
     
@@ -61,54 +67,77 @@ class CubicSpline:
         if knots is None:
             knots = linspace(0,1, len(control) - 2) #Padding adds 4 points, and we need knots length to be 2 more than control
             self.knots = r_[knots[0], knots[0], knots, knots[-1], knots[-1]]
-        else:
+        else: #Knots are provided, need to sort. 
             self.knots = knots
             self.knots.sort()
         
         if len(self.knots) != len(self.control) + 2: #Exception for input length
-            raise IndexError('The length of control points, K, and knot grid, L, need to match with K+2=L. Now K =', len(self.control), 'and L = ', len(self.knots))
+            raise IndexError('The length of control points, K, and knot grid, L, \
+            need to match with K+2=L. "\n"Current lengths are K =', len(self.control), '\
+            and L = ', len(self.knots))
         
-
     """
     Returns the point 'u' evaluated with De Boors algorithm.
     """
     def __call__(self, u):
-        return self.point_eval(u)
+        if not min(self.knots) <= u <= max(self.knots): 
+            raise IndexError('Input in is not a value inside the knot sequence.')
+        else:
+            return self.point_eval(u)
     
     """
     Calculates and plot points using De Boors algorithm. 
     If 'plot_poly' is set True (default), then also plots the Control Points.  
     To increase plot resolution, increase 'precision' parameter
     """
-    def plot(self, plot_poly = True):
-        
-        points = array([self.point_eval(point) for point in linspace(0,1,150)])
-        print(points)
+    def plot(self, u_i = None, plot_poly = True, precision = 150):
         figure(1)
+        
+        """Add-on 1:"""
+        if u_i is not None:
+            if u_i not in self.knots: 
+                raise IndexError('Input in is not a value of the knot sequence.')
+            markIndx = searchsorted(self.knots, u_i)
+            self.markControl = []
+            self.markBloss = []
+            self.points = array([self.point_eval(point, markIndx) for point in linspace(0,1,precision)])
+            plot([x[0] for x in self.markControl], [y[1] for y in self.markControl], 'bs') #Control points
+            plot([x[0] for x in self.markBloss], [y[1] for y in self.markBloss], 'r1') #Blossoms
+        """Add-on 1:"""
+        
+        points = array([self.point_eval(point) for point in linspace(0,1, precision)])
+        #print(points)
         plot(points[:,0],points[:,1])
         if plot_poly:
-            plot(self.control[:,0],self.control[:,1], 'yx--')
+            plot(self.control[:,0], self.control[:,1], 'yx--')
         
     """
     Help method to method 'plot', used to evaluate point 'u' with the De Boors algorithm and calculate splines. 
     """
-    def point_eval(self, u):
-        indx = int(self.knots.searchsorted([u]))-1
-        blossoms = array([self.control[i] for i in range(indx-2, indx+2)])
+    def point_eval(self, u, markIndx = None):
+        indx = int(self.knots.searchsorted([u])) - 1
+        
+        blossoms0 = array([self.control[i] for i in range(indx-2, indx+2)])
         knots = array([self.knots[i] for i in range(indx-2, indx+4)])
         
         alphas = array([((knots[i+3] - u)/(knots[i+3] - knots[i])) for i in range(3)])
-        blossoms = array([alphas[i]*blossoms[i] + (1 - alphas[i])*blossoms[i+1]
+        blossoms1 = array([alphas[i]*blossoms0[i] + (1 - alphas[i])*blossoms0[i+1]
                     for i in range(3)])
         
         alphas = array([(knots[i+3] - u)/(knots[i+3] - knots[i+1]) for i in range(2)])
-        blossoms = array([alphas[i]*blossoms[i] + (1 - alphas[i])*blossoms[i+1]
+        blossoms2 = array([alphas[i]*blossoms1[i] + (1 - alphas[i])*blossoms1[i+1]
                     for i in range(2)])
         
         alphas = (knots[3]-u)/(knots[3]-knots[2])
-        blossoms = alphas*blossoms[0] + (1-alphas)*blossoms[1]
+        blossoms3 = alphas*blossoms2[0] + (1-alphas)*blossoms2[1]
         
-        return blossoms
+        # Add on attemp 
+        if markIndx == indx:
+            [self.markControl.append(x) for x in blossoms0]
+            [self.markBloss.append(x) for x in blossoms1]
+            [self.markBloss.append(x) for x in blossoms2]
+        
+        return blossoms3
 
     """
     Takes a knot sequence 'knots' and index 'i' as input and returns a 
@@ -136,7 +165,6 @@ class CubicSpline:
                 return basis(u, i, k-1)*coeff1 + basis(u, i+1, k-1)*coeff2
         return lambda u: basis(u, i, 3)
 
-    
     """
     Example program if class executed as main.
     """
@@ -174,8 +202,10 @@ if __name__ == '__main__':
     KNOTS[ 1] = KNOTS[ 2] = KNOTS[ 0]
     KNOTS[-3] = KNOTS[-2] = KNOTS[-1]
     
-    c = CubicSpline(CONTROL)
-    c.plot()
+    c = CubicSpline(CONTROL, KNOTS)
+    #c = CubicSpline(CONTROL)
+    #c.plot()
+    c.plot(0.52, True, 200)
     
     
     #Cant get the last basis function to show (-2 instead of -3), index error
@@ -183,6 +213,4 @@ if __name__ == '__main__':
     basis = [c.basis_function(KNOTS, i) for i in range(len(KNOTS)-3)]
     X = linspace(0, 1, 200)
     Y = array([[N(x) for x in X] for N in basis])
-    print(shape(Y))
-    print(array([y[:] for y in Y]))
     figure(2); [plot(X, y) for y in Y]

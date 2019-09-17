@@ -27,8 +27,8 @@ class CubicSpline:
             self.markControl = []
             self.markBloss = []
             self.points = array([self.point_eval(point, markIndx) for point in linspace(0,1,precision)])
-            plot([y[0] for y in self.markControl], [y[1] for y in self.markControl], 'bs') #Control points
-            plot([y[0] for y in self.markBloss], [y[1] for y in self.markBloss], 'r1')
+            plot([x[0] for x in self.markControl], [y[1] for y in self.markControl], 'bs') #Control points
+            plot([x[0] for x in self.markBloss], [y[1] for y in self.markBloss], 'r1')
             print(self.markBloss)
         else:
             self.points = array([self.point_eval(point) for point in linspace(0,1,precision)])
@@ -58,18 +58,9 @@ class CubicSpline:
        
         #print(blossoms)
         if markIndx == indx:
-            self.markControl.append(blossoms0[0])
-            self.markControl.append(blossoms0[1])
-            self.markControl.append(blossoms0[2])
-            self.markControl.append(blossoms0[3])
-            self.markBloss.append(blossoms1[0])
-            self.markBloss.append(blossoms1[1])
-            self.markBloss.append(blossoms1[2])
-            self.markBloss.append(blossoms2[0])
-            self.markBloss.append(blossoms2[1])
-            self.markBloss.append(blossoms3)
-
-
+            [self.markControl.append(x) for x in blossoms0]
+            [self.markBloss.append(x) for x in blossoms1]
+            [self.markBloss.append(x) for x in blossoms2]
         return blossoms3
         
         
