@@ -11,6 +11,8 @@ from matplotlib.pyplot import *
 class CubicSpline:
     
     """
+    CubicSpline
+    
     A class used to represent a CubicSpline with the purpose of curve design in 2D. 
 
     ...
@@ -19,10 +21,10 @@ class CubicSpline:
     ----------
     KNOTS : float
         Sequence of floats
-    CONTROL : List of tuples
-        Control points, used for shaping the curve.
+    CONTROL : tuples
+        List of tuples. Control points, used for shaping the curve.
 
-    Methods
+    Methods 
     -------
     __init__(knots, control):
         Sorts the knot grid and adds padding. 
@@ -32,12 +34,13 @@ class CubicSpline:
         If 'plot_poly' is set True (default), then also plots the Control Points.  
         To increase plot resolution, increase 'precision' parameter.
         
-    _point_eval(u):
-        Helph method to 'plot', used to evaluate point 'u' with the De Boors algorithm.
+    point_eval(u):
+        Help method to method 'plot', used to evaluate point 'u' with the De Boors algorithm.
         
     basis_fuction(knots, i):
         Takes a knot sequence 'knots' and index 'i' as input and returns a 
         python function to evaluate the i:th B-spline basis function. 
+    ------
     """
     
     

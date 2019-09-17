@@ -8,35 +8,91 @@ Created on Wed Sep 11 14:42:55 2019
 from scipy import *
 from matplotlib.pyplot import *
 
+"""
+    CubicSpline
+    
+    A class used to represent a CubicSpline with the purpose of curve design in 2D. 
+
+    ...
+
+    Attributes
+    ----------
+    KNOTS : float
+        Sequence of floats
+    CONTROL : tuples
+        List of tuples. Control points, used for shaping the curve.
+
+    Methods 
+    -------
+    __init__(control, knots = None):
+        Sorts the knot grid and adds padding. 
+        If no knot sequence is passed, the default will be a equidistant vector from 0 to 1.
+    
+    __call__(u):
+        Returns the point 'u' evaluated with De Boords algorithm
+    
+    plot(plot_poly = True, precision = 150):
+        Calculates and plot points using De Boors algorithm. 
+        If 'plot_poly' is set True (default), then also plots the Control Points.  
+        To increase plot resolution, increase 'precision' parameter.
+        
+    point_eval(u):
+        Help method to method 'plot', used to evaluate point 'u' with the De Boors algorithm and calculate splines. 
+        
+    basis_fuction(knots, i):
+        Takes a knot sequence 'knots' and index 'i' as input and returns a 
+        python function to evaluate the i:th B-spline basis function. 
+    ------
+    """
+    
 class CubicSpline:
     
-    
-    def __init__(self, knots, control):
-        #self.knots = r_[knots[0], knots[0], knots, knots[-1], knots[-1]]
-        control = array(control)
-        if shape(control[0]) != (2,):
+    """
+    Sorts the knot grid and adds padding. 
+    If no knot sequence is passed, the default will be a equidistant vector from 0 to 1.
+    """
+    def __init__(self, control, knots = None):
+       
+        if shape(control[0]) != (2,): #Exception for input shape
             raise ValueError('Control points are not two dimensional')
-        self.control = control
-        self.knots = knots
-        self.knots.sort()
+        
+        self.control = array(control)
+        
+        if knots is None:
+            knots = linspace(0,1, len(control) - 2) #Padding adds 4 points, and we need knots length to be 2 more than control
+            self.knots = r_[knots[0], knots[0], knots, knots[-1], knots[-1]]
+        else:
+            self.knots = knots
+            self.knots.sort()
+        
+        if len(self.knots) != len(self.control) + 2: #Exception for input length
+            raise IndexError('The length of control points, K, and knot grid, L, need to match with K+2=L. Now K =', len(self.control), 'and L = ', len(self.knots))
+        
 
-
+    """
+    Returns the point 'u' evaluated with De Boors algorithm.
+    """
     def __call__(self, u):
         return self.point_eval(u)
     
+    """
+    Calculates and plot points using De Boors algorithm. 
+    If 'plot_poly' is set True (default), then also plots the Control Points.  
+    To increase plot resolution, increase 'precision' parameter
+    """
     def plot(self, plot_poly = True):
         
         points = array([self.point_eval(point) for point in linspace(0,1,150)])
         print(points)
+        figure(1)
         plot(points[:,0],points[:,1])
         if plot_poly:
             plot(self.control[:,0],self.control[:,1], 'yx--')
-    
+        
+    """
+    Help method to method 'plot', used to evaluate point 'u' with the De Boors algorithm and calculate splines. 
+    """
     def point_eval(self, u):
-#        if u < self.grid_u[0] or u > self.grid_u[-1]:
-#            raise ValueError(f"""u = {u} is not contained in
-#                             the grid [{self.grid_u[0]}, {self.grid_u[-1]}]
-#                             """)
         indx = int(self.knots.searchsorted([u]))-1
         blossoms = array([self.control[i] for i in range(indx-2, indx+2)])
         knots = array([self.knots[i] for i in range(indx-2, indx+4)])
@@ -54,7 +110,10 @@ class CubicSpline:
         
         return blossoms
 
-    
+    """
+    Takes a knot sequence 'knots' and index 'i' as input and returns a 
+    python function to evaluate the i:th B-spline basis function. 
+    """
     def basis_function(self, knots, i):  
         def basis(u, i, k):
             if k == 0:
@@ -77,7 +136,10 @@ class CubicSpline:
                 return basis(u, i, k-1)*coeff1 + basis(u, i+1, k-1)*coeff2
         return lambda u: basis(u, i, 3)
 
-
+    
+    """
+    Example program if class executed as main.
+    """
 if __name__ == '__main__':
     
     #print(c.basis_function(KNOTS,0))
@@ -111,4 +173,16 @@ if __name__ == '__main__':
     KNOTS = linspace(0, 1, 26)
     KNOTS[ 1] = KNOTS[ 2] = KNOTS[ 0]
     KNOTS[-3] = KNOTS[-2] = KNOTS[-1]
-    c = CubicSpline(KNOTS, CONTROL)
+    
+    c = CubicSpline(CONTROL)
+    c.plot()
+    
+    
+    #Cant get the last basis function to show (-2 instead of -3), index error
+    
+    basis = [c.basis_function(KNOTS, i) for i in range(len(KNOTS)-3)]
+    X = linspace(0, 1, 200)
+    Y = array([[N(x) for x in X] for N in basis])
+    print(shape(Y))
+    print(array([y[:] for y in Y]))
+    figure(2); [plot(X, y) for y in Y]

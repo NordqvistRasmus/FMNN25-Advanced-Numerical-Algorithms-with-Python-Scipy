@@ -28,14 +28,14 @@ class CubicSpline:
             self.markBloss = []
             self.points = array([self.point_eval(point, markIndx) for point in linspace(0,1,precision)])
             plot([y[0] for y in self.markControl], [y[1] for y in self.markControl], 'bs') #Control points
-            plot([y[0] for y in self.markBloss], [y[1] for y in self.markBloss], 'r--')
+            plot([y[0] for y in self.markBloss], [y[1] for y in self.markBloss], 'r1')
             print(self.markBloss)
         else:
             self.points = array([self.point_eval(point) for point in linspace(0,1,precision)])
             
         if plot_poly:
             plot(self.control[:,0], self.control[:,1], 'yx--')
-        plot(self.points[:,0], self.points[:,1])
+        #plot(self.points[:,0], self.points[:,1])
         show()
     
     def point_eval(self, u, markIndx = None):
@@ -59,14 +59,16 @@ class CubicSpline:
         #print(blossoms)
         if markIndx == indx:
             self.markControl.append(blossoms0[0])
-            #self.markControl.append(blossoms0[1])
-            #self.markControl.append(blossoms0[2])
-            #self.markControl.append(blossoms0[3])
+            self.markControl.append(blossoms0[1])
+            self.markControl.append(blossoms0[2])
+            self.markControl.append(blossoms0[3])
             self.markBloss.append(blossoms1[0])
-            #self.markBloss.append(blossoms1[1])
-            #self.markBloss.append(blossoms1[2])
+            self.markBloss.append(blossoms1[1])
+            self.markBloss.append(blossoms1[2])
             self.markBloss.append(blossoms2[0])
-            #self.markBloss.append(blossoms2[1])
+            self.markBloss.append(blossoms2[1])
+            self.markBloss.append(blossoms3)
+
 
         return blossoms3
         
@@ -130,7 +132,7 @@ CONTROL = [(-12.73564, 9.03455),
 if __name__ == '__main__':
     c = CubicSpline(KNOTS, CONTROL)
    # pts = c(0.25)
-    c.plot(0.12, True, 100) 
+    c.plot(0.5, True, 200) 
 
 
         
