@@ -13,10 +13,14 @@ class CubicSpline:
     
     def __init__(self, knots, control):
         #self.knots = r_[knots[0], knots[0], knots, knots[-1], knots[-1]]
+        control = array(control)
+        if shape(control[0]) != (2,):
+            raise ValueError('Control points are not two dimensional')
+        self.control = control
         self.knots = knots
         self.knots.sort()
-        control = array(control)
-        self.control = control
+#        control = array(control)
+#        self.control = control
         
     def __call__(self):
         pass
@@ -80,18 +84,36 @@ class CubicSpline:
 
 
 if __name__ == '__main__':
-    c = CubicSpline(KNOTS, CONTROL)
-    print(c.basis_function(KNOTS,0))
+    
+    #print(c.basis_function(KNOTS,0))
     #print(c.point_eval(0.2))  
     #c.plot()
+    CONTROL = [(-12.73564, 9.03455),
+                   (-26.77725, 15.89208),
+                   (-42.12487, 20.57261),
+                   (-15.34799, 4.57169),
+                   (-31.72987, 6.85753),
+                   (-49.14568, 6.85754),
+                   (-38.09753, -1e-05),
+                   (-67.92234, -11.10268),
+                   (-89.47453, -33.30804),
+                   (-21.44344, -22.31416),
+                   (-32.16513, -53.33632),
+                   (-32.16511, -93.06657),
+                   (-2e-05, -39.83887),
+                   (10.72167, -70.86103),
+                   (32.16511, -93.06658),
+                   (21.55219, -22.31397),
+                   (51.377, -33.47106),
+                   (89.47453, -33.47131),
+                   (15.89191, 0.00025),
+                   (30.9676, 1.95954),
+                   (45.22709, 5.87789),
+                   (14.36797, 3.91883),
+                   (27.59321, 9.68786),
+                   (39.67575, 17.30712)] 
         
-    
-        
-        
-        
-    
-        
-        
-        
-
-
+    KNOTS = linspace(0, 1, 26)
+    KNOTS[ 1] = KNOTS[ 2] = KNOTS[ 0]
+    KNOTS[-3] = KNOTS[-2] = KNOTS[-1]
+    c = CubicSpline(KNOTS, CONTROL)

@@ -8,7 +8,7 @@ from  pylab import *
 from CubicSpline import CubicSpline
 
 
-import  unittest
+import unittest
 import random
 
 class Test_CubicSpline(unittest.TestCase):
@@ -66,12 +66,11 @@ class Test_CubicSpline(unittest.TestCase):
         self.assertAlmostEqual(result[0], expected[0])
         self.assertAlmostEqual(result[1], expected[1])
     
-    """
+    
     def test_dimensions(self):
-        with self.assertRaises(TypeError):
+        with self.assertRaises(ValueError):
             cp_1D = [i[0] for i in self.CONTROL]
-            cs = CubicSpline(self.KNOTS, self.CONTROL)
-    """
+            cs = CubicSpline(self.KNOTS, cp_1D)
     
     def test_null(self):
         self.tearDown()
@@ -82,30 +81,30 @@ class Test_CubicSpline(unittest.TestCase):
     
     """
     Uppg 4
-    
+    """
+    """
     def test_blossom(self):
         #s = CubicSpline(cp, knots = knots)
-        cs.basis_function(KNOTS, 0.2)
-        bases = [cs.basis_function(self.KNOTS, i) for i in range(len(self.KNOTS)-4)]
-        bases_in_point = [N(0.2) for N in bases]
-        result = sum(bases_in_point)
-        expected = cs.point_eval(0.2)
+        self.cs.basis_function(self.KNOTS, 0.2)
+        bases = [self.cs.basis_function(self.KNOTS, i) for i in range(len(self.KNOTS)-4)]
+        bases_in_point = array([N(0.2) for N in bases])
+        #Måste fixas 
         self.assertAlmostEqual(result[0], expected[0])
         self.assertAlmostEqual(result[1], expected[1])
-    
+    """
     def test_padded(self):
         #s = CubicSpline(self.cp, self.knots)
         checker_left = checker_right = False
-        if (cs.knots[0] == cs.knots[1] and cs.knots[1] == cs.knots[2]):
+        if (self.cs.knots[0] == self.cs.knots[1] and self.cs.knots[1] == self.cs.knots[2]):
             checker_left = True
-        if (cs.knots[-1] == cs.knots[-2] and cs.knots[-2] == cs.knots[-3]):
+        if (self.cs.knots[-1] == self.cs.knots[-2] and self.cs.knots[-2] == self.cs.knots[-3]):
             checker_right = True        
         self.assertTrue(checker_left)
         self.assertTrue(checker_right)
-    
+
     def test_basis_sum(self):
         #s = CubicSpline(cp, knots = knots)
-        bases = [cs.basis_function(self.KNOTS, i) for i in range(len(self.KNOTS)-4)]
+        bases = [self.cs.basis_function(self.KNOTS, i) for i in range(len(self.KNOTS)-4)]
         x = linspace(0,1, 200)
         y = [[N(val) for val in x] for N in bases]
         Y = zeros((1, len(x)))
@@ -113,10 +112,11 @@ class Test_CubicSpline(unittest.TestCase):
             Y += element
         #self.assertEqual([y for y in Y], 1)
         one = ones(len(Y))
+        checker = True
         for i in range(0,len(Y)):
-            self.assertAlmostEqual(Y[i],one[i])
-    """
-        
+            if Y[i] is not one[i]:
+                checker = False
+        self.assertTrue(checker)
         
     
     def test_basisFunctionPositive(self):
@@ -134,7 +134,8 @@ class Test_CubicSpline(unittest.TestCase):
                     break
                 
         self.assertTrue(positiveValue)
-        
+
+
 if __name__ == '__main__':
     unittest.main()
 
