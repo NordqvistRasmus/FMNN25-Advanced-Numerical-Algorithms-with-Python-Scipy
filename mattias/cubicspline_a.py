@@ -23,12 +23,12 @@ class CubicSpline:
     
     def plot(self, u_i = None, plot_poly = True, precision = 200):
         if u_i is not None:
-            markIndx = searchsorted(self.knots, u_i)
+            markIndx = searchsorted(self.knots, u_i) - 1
             self.markControl = []
             self.markBloss = []
             self.points = array([self.point_eval(point, markIndx) for point in linspace(0,1,precision)])
             plot([y[0] for y in self.markControl], [y[1] for y in self.markControl], 'bs') #Control points
-            plot([y[0] for y in self.markBloss], [y[1] for y in self.markBloss], 'ro')
+            plot([y[0] for y in self.markBloss], [y[1] for y in self.markBloss], 'r--')
             print(self.markBloss)
         else:
             self.points = array([self.point_eval(point) for point in linspace(0,1,precision)])
@@ -59,14 +59,14 @@ class CubicSpline:
         #print(blossoms)
         if markIndx == indx:
             self.markControl.append(blossoms0[0])
-            self.markControl.append(blossoms0[1])
-            self.markControl.append(blossoms0[2])
-            self.markControl.append(blossoms0[3])
+            #self.markControl.append(blossoms0[1])
+            #self.markControl.append(blossoms0[2])
+            #self.markControl.append(blossoms0[3])
             self.markBloss.append(blossoms1[0])
-            self.markBloss.append(blossoms1[1])
-            self.markBloss.append(blossoms1[2])
+            #self.markBloss.append(blossoms1[1])
+            #self.markBloss.append(blossoms1[2])
             self.markBloss.append(blossoms2[0])
-            self.markBloss.append(blossoms2[1])
+            #self.markBloss.append(blossoms2[1])
 
         return blossoms3
         
@@ -130,7 +130,7 @@ CONTROL = [(-12.73564, 9.03455),
 if __name__ == '__main__':
     c = CubicSpline(KNOTS, CONTROL)
    # pts = c(0.25)
-    c.plot(0.5, True, 200) 
+    c.plot(0.12, True, 100) 
 
 
         
