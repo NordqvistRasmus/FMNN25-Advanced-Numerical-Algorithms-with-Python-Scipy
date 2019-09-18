@@ -8,10 +8,11 @@ Created on Wed Sep 11 14:42:55 2019
 from scipy import *
 from matplotlib.pyplot import *
 from timeit import default_timer as timer
-import scipy as sp
-import numpy as np
 
-"""
+
+class CubicSpline:
+    
+    """
     CubicSpline
     
     A class used to represent a CubicSpline with the purpose of curve design in 2D. 
@@ -53,12 +54,11 @@ import numpy as np
     ------
     """
     
-class CubicSpline:
-    
     """
     Sorts the knot grid and adds padding. 
     If no knot sequence is passed, the default will be a equidistant vector from 0 to 1.
     """
+        
     def __init__(self, control, knots = None, Inter=False):
         
         if control is None:
@@ -70,26 +70,24 @@ class CubicSpline:
         self.control = array(control)
         
         if knots is None:
-            knots = linspace(0,1, len(control) - 2) #Padding adds 4 points, and we need knots length to be 2 more than control
-            self.knots = r_[knots[0], knots[0], knots, knots[-1], knots[-1]]
+            knots = linspace(0,1, len(control) - 2) #Padding adds 5 points, and we need knots length to be 2 more than control
+            self.knots = r_[knots[0], knots[0], knots, knots[-1], knots[-1], knots[-1]]
         else: #Knots are provided, need to sort. 
             self.knots = knots
             self.knots.sort()
         
-        if len(self.knots) != len(self.control) + 2: #Exception for input length
+        if len(self.knots) != len(self.control) + 3: #Exception for input length
             raise IndexError('The length of control points, K, and knot grid, L, \
-            need to match with K+2=L. "\n"Current lengths are K =', len(self.control), '\
+            need to match with K+3=L. "\n"Current lengths are K =', len(self.control), '\
             and L = ', len(self.knots))
             
         if Inter:
             self.control=control
             knots=np.linspace(0,1,len(self.control)-2)
             self.knots = np.concatenate([[0,0],knots,[1,1]])
-            self.interpol(self.control)   
-        
-    """
-    Returns the point 'u' evaluated with De Boors algorithm.
-    """
+            self.interpol(self.control)           
+    
+   
     def __call__(self, u):
         if not min(self.knots) <= u <= max(self.knots): 
             raise IndexError('Input in is not a value inside the knot sequence.')
@@ -104,7 +102,7 @@ class CubicSpline:
     def plot(self, u_i = None, plot_poly = True, precision = 150):
         figure(1)
         
-        """Add-on 1:"""
+        #   Add-on 1:
         if u_i is not None:
             if u_i not in self.knots: 
                 raise IndexError('Input in is not a value of the knot sequence.')
@@ -114,7 +112,7 @@ class CubicSpline:
             self.points = array([self.point_eval(point, markIndx) for point in linspace(0,1,precision)])
             plot([x[0] for x in self.markControl], [y[1] for y in self.markControl], 'bs') #Control points
             plot([x[0] for x in self.markBloss], [y[1] for y in self.markBloss], 'r1') #Blossoms
-        """Add-on 1:"""
+        #   Add-on 1:
         
         points = array([self.point_eval(point) for point in linspace(0,1, precision)])
         #print(points)
@@ -189,14 +187,14 @@ class CubicSpline:
         for i in range(len(grevabs)):
 
             for j in range(len(grevabs)):
-                controlBase = np.zeros([len(self.knots)-2,2]) #For creating our b-spline basis
+                controlBase = zeros([len(self.knots)-2,2]) #For creating our b-spline basis
                 controlBase[j]=[1,1]
                 bspline=CubicSpline(controlBase,self.knots) #Creates the b-spline base    
                 u=(np.array([grevabs[i]])) 
                 VanderMatrix[i,j] = bspline(u)[0] #Evalues the point u using our bspline
 
-        x = sp.linalg.solve(VanderMatrix,d[:,0]) #Solves for our vector of x coords
-        y = sp.linalg.solve(VanderMatrix,d[:,1]) ##Solves for our vector of y coords
+        x = linalg.solve(VanderMatrix,d[:,0]) #Solves for our vector of x coords
+        y = linalg.solve(VanderMatrix,d[:,1]) ##Solves for our vector of y coords
 
     
 
@@ -244,12 +242,16 @@ if __name__ == '__main__':
     KNOTS = linspace(0, 1, 26)
     KNOTS[ 1] = KNOTS[ 2] = KNOTS[ 0]
     KNOTS[-3] = KNOTS[-2] = KNOTS[-1]
+    KNOTS = r_[KNOTS, KNOTS[-1]] #Fix index error with basis function
+    
     
     c = CubicSpline(CONTROL, KNOTS)
     #c = CubicSpline(CONTROL)
     #c.plot()
+    start = timer()
     c.plot(0.52, True, 200)
-    
+    end = timer()
+    print(end-start, 'seconds.')
     
     #Cant get the last basis function to show (-2 instead of -3), index error
     
@@ -259,7 +261,7 @@ if __name__ == '__main__':
     figure(2); [plot(X, y) for y in Y]
     
     #Interpol test
-    points=np.array([[0,3],[3,6],[5.5,6.5],[4,0],[2,-3],[0,-6],
-                     [-2,-3],[-4,0],[-5.5,6.5],[-3,5.5],[0,3],[0,3]]) 
-    b=CubicSpline(points, Inter=True)
-    b.plot(plot_poly=False) #plot it
+    #points = np.array([[0,3],[3,6],[5.5,6.5],[4,0],[2,-3],[0,-6],
+    #                 [-2,-3],[-4,0],[-5.5,6.5],[-3,5.5],[0,3],[0,3]]) 
+    # b = CubicSpline(points, Inter = True)
+    #b.plot(plot_poly=False) #plot it
