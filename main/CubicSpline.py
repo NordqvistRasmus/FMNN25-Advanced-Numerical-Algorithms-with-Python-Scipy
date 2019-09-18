@@ -8,6 +8,8 @@ Created on Wed Sep 11 14:42:55 2019
 from scipy import *
 from matplotlib.pyplot import *
 from timeit import default_timer as timer
+import scipy as sp
+import numpy as np
 
 """
     CubicSpline
@@ -57,7 +59,7 @@ class CubicSpline:
     Sorts the knot grid and adds padding. 
     If no knot sequence is passed, the default will be a equidistant vector from 0 to 1.
     """
-    def __init__(self, control, knots = None):
+    def __init__(self, control, knots = None, Inter=False):
         
         if control is None:
             raise TypeError('Control points are not defiened properly')
@@ -78,6 +80,12 @@ class CubicSpline:
             raise IndexError('The length of control points, K, and knot grid, L, \
             need to match with K+2=L. "\n"Current lengths are K =', len(self.control), '\
             and L = ', len(self.knots))
+            
+        if Inter:
+            self.control=control
+            knots=np.linspace(0,1,len(self.control)-2)
+            self.knots = np.concatenate([[0,0],knots,[1,1]])
+            self.interpol(self.control)   
         
     """
     Returns the point 'u' evaluated with De Boors algorithm.
@@ -167,6 +175,38 @@ class CubicSpline:
                 
                 return basis(u, i, k-1)*coeff1 + basis(u, i+1, k-1)*coeff2
         return lambda u: basis(u, i, 3)
+    
+    def interpol(self,points):
+
+        d = points #Our interpolationpoints
+        grevabs=np.zeros([len(self.knots)-2])
+
+        for i in range(len(self.knots)-2):
+            grevabs[i]=(self.knots[i]+self.knots[i+1]+self.knots[i+2])/3 #Our Greville abscissae vector
+
+        VanderMatrix = np.zeros((len(grevabs),len(grevabs))) #Empty matrix for our A in Ax=b
+
+        for i in range(len(grevabs)):
+
+            for j in range(len(grevabs)):
+                controlBase = np.zeros([len(self.knots)-2,2]) #For creating our b-spline basis
+                controlBase[j]=[1,1]
+                bspline=CubicSpline(controlBase,self.knots) #Creates the b-spline base    
+                u=(np.array([grevabs[i]])) 
+                VanderMatrix[i,j] = bspline(u)[0] #Evalues the point u using our bspline
+
+        x = sp.linalg.solve(VanderMatrix,d[:,0]) #Solves for our vector of x coords
+        y = sp.linalg.solve(VanderMatrix,d[:,1]) ##Solves for our vector of y coords
+
+    
+
+        controlpoints = np.zeros((len(x),2))
+
+        for i in range(len(x)): #Gatheres the coordinates of the controlpoints
+            controlpoints[i,0]=x[i]
+            controlpoints[i,1]=y[i]
+        self.control=controlpoints
+        alfa=CubicSpline(controlpoints) #Cubic Spline the controlpoints
 
     """
     Example program if class executed as main.
@@ -217,3 +257,9 @@ if __name__ == '__main__':
     X = linspace(0, 1, 200)
     Y = array([[N(x) for x in X] for N in basis])
     figure(2); [plot(X, y) for y in Y]
+    
+    #Interpol test
+    points=np.array([[0,3],[3,6],[5.5,6.5],[4,0],[2,-3],[0,-6],
+                     [-2,-3],[-4,0],[-5.5,6.5],[-3,5.5],[0,3],[0,3]]) 
+    b=CubicSpline(points, Inter=True)
+    b.plot(plot_poly=False) #plot it
