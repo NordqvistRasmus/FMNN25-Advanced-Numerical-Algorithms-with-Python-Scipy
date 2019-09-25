@@ -6,15 +6,16 @@ Created on Wed Sep 25 21:12:56 2019
 """
 from  scipy import *
 from  pylab import *
+import OptimizationProblem.py
 
 """
 Abstract solver class
 """
-class OptimizationSolver():
+class OptimizationSolver(OptimizationProblem):
     
-    def __init__(self, obj_function, x_0, gradient = None, hessian = None):
+    #def __init__(self, obj_function, x_0, gradient = None, hessian = None):
         
-        pass
+        #pass
     
     
 class QuasiNewton(OptimizationSolver):
