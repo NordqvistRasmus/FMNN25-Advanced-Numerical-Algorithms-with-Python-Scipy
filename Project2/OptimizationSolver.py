@@ -11,7 +11,7 @@ import OptimizationProblem.py
 """
 Abstract solver class
 """
-class OptimizationSolver(OptimizationProblem):
+class OptimizationSolver():
     
     #def __init__(self, obj_function, x_0, gradient = None, hessian = None):
         
@@ -21,13 +21,22 @@ class OptimizationSolver(OptimizationProblem):
 class Solver(OptimizationSolver):
     
     def __init__(self):
-        
         pass
     
-    #def
-    #def
-    #def moore methods..
+    def __call__(self):
+        pass
+
+    def newton(self):
+        pass
     
+    def _newton_step(self):
+        pass
+    
+    def exact_line_search(self):
+        pass
+    
+    def inexact_line_search(self):
+        pass
     
     def hessian(self):
 
