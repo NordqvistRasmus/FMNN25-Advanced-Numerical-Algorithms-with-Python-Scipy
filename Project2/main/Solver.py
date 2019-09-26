@@ -50,6 +50,8 @@ class Solver:
         if problem.gradient is not None:
             gradient = self.problem.gradient(x_k)
         else:
+            gradient = self._gradient(x_k)
+        
             
         
         x_next = solve()
@@ -69,7 +71,7 @@ class Solver:
     def inexact_line_search(self):
         pass
     
-    def _hessian(self):
+    def _hessian(self, x_k):
 
         
     
