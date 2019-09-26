@@ -7,20 +7,12 @@ Created on Wed Sep 25 21:12:56 2019
 from  scipy import *
 from  pylab import *
 import OptimizationProblem.py
-
-"""
-Abstract solver class
-"""
-class OptimizationSolver():
-    
-    #def __init__(self, obj_function, x_0, gradient = None, hessian = None):
-        
-        #pass
     
    
-class Solver(OptimizationSolver):
+class Solver:
     
-    def __init__(self):
+    def __init__(self, problem):
+        self.problem = problem
         pass
     
     def __call__(self):
