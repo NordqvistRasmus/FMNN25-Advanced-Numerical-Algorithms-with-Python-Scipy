@@ -43,7 +43,6 @@ class Solver:
         elif mode == 'exact':
             alpha = self.exact_line_search(x_k)
             
-        
         elif mode == 'inexact':
             alpha = self.inexact_line_search(x_k)
             
@@ -51,10 +50,11 @@ class Solver:
             gradient = self.problem.gradient(x_k)
         else:
             gradient = self._gradient(x_k)
+        hessian = self._hessian(x_k)
         
-            
+        x_next = solve(hessian, hessian@x_k - gradient)
         
-        x_next = solve()
+        return x_next
     
     def _gradient(self, x_k):
         gradient = array([(self.function(x_k)
