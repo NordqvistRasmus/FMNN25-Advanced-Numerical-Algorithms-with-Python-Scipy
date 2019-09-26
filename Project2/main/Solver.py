@@ -88,25 +88,55 @@ class Solver:
         return div
         
     
-class GoodBroydenSolver(Solver):
+# här använder jag mig av en faktor delta som är = alpha * s, där s ska vara s = -hessian(x_k) @ g(x_k)
+# Vet inte om detta skall deklareras någonstans i newton_step-metoden som ett attribut eller
+# om vi ska ha det som parametrar i varje _hessian skuggning. Lämnar detta öpper för er att bestämma
+# mitt förslag är att vi lägger till det som parametrar.
+# I övrigt är alla metoder implementerade.
+class GoodBroydenSolver(QuasiNewton):
     
-    def _hessian(self, hessian):
-        pass
+    def _hessian(self, x_k):
+        delta =  self.alpha*(-self.hessian@self.gradient) #osäker på denna
+        gamma = self.gradient(x_k) - self.gradient(x_k-delta)
+        u = delta - self.hessian@gamma
+        a = 1 /u@gamma
+        return self.hessian + a*outer(u, u)
+
+#Allmänt osäker på denna bad Broyden-metoden, svårt att hitta info.       
+class BadBroydenSolver(QuasiNewton):
+    
+    def _hessian(self, x_k):
+        delta =  self.alpha*(-self.hessian@self.gradient)
+        gamma = self.gradient(x_k) - self.gradient(x_k-delta)
+        u = gamma - self.hessian@delta 
+        a = 1 / gamma@gamma #Inte säker på om det ska vara gamma@gamma eller
+        # delta@delta
+        return self.hessian + a*outer(u,gamma)
         
-class BadBroydenSolver(Solver):
+class DFP2Solver(QuasiNewton):
     
-    def _hessian(self, hessian):
-        pass
-        
-class DFP2Solver(Solver):
+    def _hessian(self, x_k):
+        delta =  self.alpha*(-self.hessian@self.gradient)
+        gamma = self.gradient(x_k) - self.gradient(x_k-delta)
+        u1 = outer(delta,delta)
+        a1 = delta@gamma
+        u2 = outer(self.hessian@gamma,gamma)@self.hessian
+        a2 = gamma@(self.hessian@gamma)
+        return self.hessian + a1*u1 - a2*u2
     
-    def _hessian(self, hessian):
-        pass
+class BFGS2Solver(QuasiNewton):
     
-class BFGS2Solver(Solver):
+    def _hessian(self, x_k):
+        delta =  self.alpha*(-self.hessian@self.gradient)
+        gamma = self.gradient(x_k) - self.gradient(x_k-delta)
+        hg = self.hessian@gamma
+        dg = delta@gamma
+        u1 = gamma@(self.hessian@gamma)
+        a1 = a2 = a3 = dg
+        u2 = outer(delta,delta)
+        u3 = outer(hg,delta) + outer(hg,delta).T #Transponat för motsat ordning 
+        return self.hessian+(1+a1*u1)*(a2*u2)-a3*u3
     
-    def _hessian(self, hesssian):
-        pass
     
 if __name__ == '__main__':
     #function = lambda x: (x[0]-1)**2 + x[1]**2
