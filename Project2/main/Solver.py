@@ -5,6 +5,7 @@ Created on Wed Sep 25 21:12:56 2019
 @author: Mattias Lundström1
 """
 from  scipy import *
+from scipy.linalg import inv
 from  pylab import *
 from OptimizationProblem import OptimizationProblem
     
@@ -14,15 +15,16 @@ class Solver:
         self.problem = problem
         self.function = problem.objective_function
         self.n = problem.x_0.shape[0]
-        self.delta = 1e-8
-        self.delta_values = diag([1e-8 for i in range(self.n)])
-       
+        self.delta_grad = 1e-8
+        self.delta_values_grad = diag([self.delta_grad for i in range(self.n)])
+        self.delta_hess = 1e-4
+        self.delta_mat_hess = diag([self.delta_hess for i in range(self.n)])
         
     
     def __call__(self):
         pass
 
-    def newton(self, mode='default', tol = 1e-8, maxIteration = 99):
+    def newton(self, mode='default', tol = 1e-12, maxIteration = 99):
         iterations = 0
         x_k = self.problem.x_0
         x_next = self._newton_step(x_k,mode)
@@ -38,28 +40,30 @@ class Solver:
         return x_next
     
     def _newton_step(self, x_k, mode):
-        if mode == 'default':
-            alpha = 1
         
-        elif mode == 'exact':
-            alpha = self.exact_line_search(x_k)
-            
-        elif mode == 'inexact':
-            alpha = self.inexact_line_search(x_k)
-            
         if self.problem.gradient is not None:
             gradient = self.problem.gradient(x_k)
         else:
             gradient = self._gradient(x_k)
+        
         hessian = self._hessian(x_k)
         
-        x_next = solve(hessian, hessian@x_k - gradient)
+        if mode == 'default':
+            alpha = 1
+        
+        elif mode == 'exact':
+            alpha = self.exact_line_search(x_k, gradient, hessian)
+            
+        elif mode == 'inexact':
+            alpha = self.inexact_line_search(x_k)
+        
+        x_next = solve(hessian, hessian@x_k - alpha*gradient)
         
         return x_next
     
     def _gradient(self, x_k):
-        gradient = array([(self.function(x_k)
-                            -self.function(x_k-self.delta_values[:,i]))*1e8
+        gradient = array([(self.function(x_k + self.delta_values_grad[:,i])
+                            -self.function(x_k - self.delta_values_grad[:,i]))/(2*self.delta_grad)
                             for i in range(self.n)])
         print(norm(gradient))
         return gradient
@@ -67,8 +71,22 @@ class Solver:
     def _search_dir(self, x_k):
         pass    
     
-    def exact_line_search(self):
-        pass
+    def exact_line_search(self, x_k, gradient, hessian, tol=1e-8, alpha_0=20):
+        
+        delta_grad = self.delta_grad
+        delta_hess = self.delta_hess
+        hessian = inv(hessian)
+        s = -hessian@gradient
+        f_alpha = lambda alpha: self.function(x_k + alpha*s)
+        deriv = lambda alpha: (f_alpha(alpha+delta_grad)-f_alpha(alpha-delta_grad))/(delta_grad*2)
+        sec_deriv = lambda alpha: (f_alpha(alpha+delta_hess) - 2*f_alpha(alpha) +
+                                   f_alpha(alpha-delta_hess))/delta_hess**2
+        alpha_k = alpha_0
+        alpha_next = alpha_next = alpha_k - deriv(alpha_k)/sec_deriv(alpha_k)
+        while abs(alpha_next-alpha_k) > tol:
+            alpha_k = alpha_next
+            alpha_next = alpha_k - deriv(alpha_k)/sec_deriv(alpha_k)
+        return alpha_next
     
     def inexact_line_search(self):
         pass
@@ -81,10 +99,10 @@ class Solver:
         return hessian
         
     def _second_part_div(self, x_k, i, j):
-        div = (self.function(x_k+self.delta_values[:,i] + self.delta_values[:,j]) -  
-               self.function(x_k+self.delta_values[:,i])-
-               self.function(x_k+self.delta_values[:,j])+
-               self.function(x_k))/self.delta**2
+        div = (self.function(x_k+self.delta_mat_hess[:,i] + self.delta_mat_hess[:,j]) -  
+               self.function(x_k+self.delta_mat_hess[:,i])-
+               self.function(x_k+self.delta_mat_hess[:,j])+
+               self.function(x_k))/self.delta_hess**2            # consider changing delta to something bigger
         return div
         
     
@@ -93,7 +111,7 @@ class Solver:
 # om vi ska ha det som parametrar i varje _hessian skuggning. Lämnar detta öpper för er att bestämma
 # mitt förslag är att vi lägger till det som parametrar.
 # I övrigt är alla metoder implementerade.
-class GoodBroydenSolver(QuasiNewton):
+class GoodBroydenSolver(Solver):
     
     def _hessian(self, x_k):
         delta =  self.alpha*(-self.hessian@self.gradient) #osäker på denna
@@ -103,7 +121,7 @@ class GoodBroydenSolver(QuasiNewton):
         return self.hessian + a*outer(u, u)
 
 #Allmänt osäker på denna bad Broyden-metoden, svårt att hitta info.       
-class BadBroydenSolver(QuasiNewton):
+class BadBroydenSolver(Solver):
     
     def _hessian(self, x_k):
         delta =  self.alpha*(-self.hessian@self.gradient)
@@ -113,7 +131,7 @@ class BadBroydenSolver(QuasiNewton):
         # delta@delta
         return self.hessian + a*outer(u,gamma)
         
-class DFP2Solver(QuasiNewton):
+class DFP2Solver(Solver):
     
     def _hessian(self, x_k):
         delta =  self.alpha*(-self.hessian@self.gradient)
@@ -124,7 +142,7 @@ class DFP2Solver(QuasiNewton):
         a2 = gamma@(self.hessian@gamma)
         return self.hessian + a1*u1 - a2*u2
     
-class BFGS2Solver(QuasiNewton):
+class BFGS2Solver(Solver):
     
     def _hessian(self, x_k):
         delta =  self.alpha*(-self.hessian@self.gradient)
@@ -143,7 +161,7 @@ if __name__ == '__main__':
     function = lambda x: 100*((x[1]-x[0]**2)**2)+(1-x[0])**2
     op = OptimizationProblem(function, array([2,2]))
     s = Solver(op)
-    zero = s.newton()
+    zero = s.newton(mode='exact')
     print(zero)
     
         
