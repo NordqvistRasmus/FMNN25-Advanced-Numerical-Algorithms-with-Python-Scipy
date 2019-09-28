@@ -90,8 +90,31 @@ class Solver:
             alpha_next = alpha_k - deriv(alpha_k)/sec_deriv(alpha_k)
         return alpha_next
     
-    def inexact_line_search(self):
-        pass
+    #Some what of a skeleton    
+    def inexact_line_search(self, x_k, gradient, hessian, tol = 1e-8, alpha_0 = 20, 
+                            rho = 0.1, sigma = 0.7, tau = 0.1, chi = 9):
+
+        #Skulle kanske kunna vara hjälpfunktioner
+        if (condition):
+            lc = True
+        else:
+            lc = False
+            
+        if (condition):
+            rc = True
+        else:
+            rc = False
+        
+        while not (lc and rc):
+            if not lc:
+                #block1
+                #extrapolation
+            else:
+                #block2
+                #interpolation
+            lc = ...
+            rc = ...
+        return alpha_0
     
     def _hessian(self, x_k):
         hessian = array([[self._second_part_div(x_k, i, j) for j in range(self.n)]
