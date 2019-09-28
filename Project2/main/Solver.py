@@ -156,9 +156,9 @@ class DFP2Solver(QuasiNewton):
         gamma = gradient(x_k) - gradient(x_k-delta)
         hg = hessian@gamma
         u1 = outer(delta,delta)
-        a1 = delta@gamma
+        a1 = 1 / delta@gamma
         u2 = outer(hg,gamma)@hessian
-        a2 = gamma@hg
+        a2 = 1 / gamma@hg
         return hessian + a1*u1 - a2*u2
     
 class BFGS2Solver(QuasiNewton):
@@ -169,7 +169,7 @@ class BFGS2Solver(QuasiNewton):
         hg = hessian@gamma
         dg = delta@gamma
         u1 = gamma@hg
-        a1 = a2 = a3 = dg
+        a1 = a2 = a3 = 1 / dg
         u2 = outer(delta,delta)
         u3 = outer(dg,hessian) + outer(dg,delta).T #Transponat för motsat ordning 
         return hessian+(1+a1*u1)*(a2*u2)-a3*u3
