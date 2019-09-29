@@ -139,6 +139,15 @@ class GoodBroydenSolver(QuasiNewton):
         u = delta - hessian@gamma
         a = 1 /u@gamma
         return hessian + a*outer(u, u)
+    
+class GoodBroydenSolverAlt(Solver):
+    def _hessian(self):
+        x_diff=x1-x0 #Skulle behöva implementeras
+        grad_diff=self.gradient(x1)-self.gradient(x0)
+        u=x_diff-self.hessian@grad_diff
+        nom=u@u.T
+        denom=1/u@grad_diff
+        self.hessian = self.hessian + nom*denom
      
 class BadBroydenSolver(QuasiNewton):
     
@@ -148,7 +157,17 @@ class BadBroydenSolver(QuasiNewton):
         u = gamma - hessian@delta 
         a = 1 / gamma@gamma
         return hessian + a*outer(u,gamma)
+
+class BadBroydenSolverAlt(Solver):
+    def _hessian(self):
         
+        x_diff=x1-x0#Skulle behöva implementeras
+        grad_diff=self.gradient(x1)-self.gradient(x0)
+        u=x_diff-self.hessian@grad_diff
+        nom=u@grad_diff.T
+        denom=1/grad_diff@grad_diff
+        return self.hessian + nom*denom
+            
 class DFP2Solver(QuasiNewton):
     
     def _hessian(self, x_k, alpha, hessian, gradient):
@@ -160,6 +179,17 @@ class DFP2Solver(QuasiNewton):
         u2 = outer(hg,gamma)@hessian
         a2 = 1 / gamma@hg
         return hessian + a1*u1 - a2*u2
+    
+class DFP2SolverAlt(Solver):
+    
+    def _hessian(self, x_k):
+        x_diff=x1-x0 #Skulle behöva implementeras
+        grad_diff=self.gradient(x1)-self.gradient(x0)
+        nom1=(self.hessian@(x_diff@x_diff.T))@self.hessian
+        denom1=1/((grad_diff.T@self.hessian)@grad_diff)
+        nom2=x_diff@x_diff.T
+        denom2=1/x_diff.T@grad_diff
+        return self.hessian - nom1*denom1 + nom2*denom2    
     
 class BFGS2Solver(QuasiNewton):
     
@@ -174,6 +204,16 @@ class BFGS2Solver(QuasiNewton):
         u3 = outer(dg,hessian) + outer(dg,delta).T #Transponat för motsat ordning 
         return hessian+(1+a1*u1)*(a2*u2)-a3*u3
     
+class BFGS2Solver2Alt(Solver):
+    
+    def _hessian(self, x_k):
+        x_diff=x1-x0 #Skulle behöva implementeras
+        grad_diff=self.gradient(x1)-self.gradient(x0)
+        denom=1/(x_diff@grad_diff)
+        nom1=(grad_diff.T@(self.hessian))@(grad_diff)
+        nom2=x_diff@(x_diff.T)
+        nom3=(x_diff@grad_diff.T)@(self.hessian)+(self.hessian@(grad_diff@x_diff))
+        return self.hessian+(1+nom1*denom)*nom1*denom-nom3*denom    
     
 if __name__ == '__main__':
     #function = lambda x: (x[0]-1)**2 + x[1]**2
