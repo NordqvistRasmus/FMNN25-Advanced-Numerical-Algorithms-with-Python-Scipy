@@ -27,7 +27,7 @@ class Solver:
     def newton(self, mode='default', tol = 1e-11, maxIteration = 1000):
         iterations = 0
         x_k = self.problem.x_0
-        x_next = self._newton_step(x_k,mode)
+        x_next = self._newton_step(x_k, mode)
         
         while(norm(x_k-x_next)>tol
               and norm(self._gradient(x_k)) > tol
@@ -124,15 +124,15 @@ class QuasiNewtonSolver(Solver):
     
     def __init__(self, problem):
         super().__init__(problem)
-        self.inverse_hessian = inv(super()._hessian(problem.x_k))
+        self.inverse_hessian = inv(super()._hessian(problem.x_0))
         
-    def _inexact_line_search(self, x_k, s_k, a_0=1, a_l=0, a_u=1e99,
+    def _inexact_line_search(self, x_k, s_k, a_l=0, a_u=1e5,
                              rho=0.1, sigma=0.7, tau=0.1, chi=9):
-        
+        a_0 = (a_u - a_l)/2
         d_a = self.delta_grad
         f_alpha = lambda alpha: self.function(x_k + alpha*s_k)
-        f_prime = lambda alpha: (self.function(x_k + (alpha + d_a)*s_k)
-                                - self.function(x_k +(alpha - d_a)*s_k))/(2*d_a)
+        f_prime = lambda alpha: (self.function(x_k + (alpha)*s_k)
+                                - self.function(x_k +(alpha - d_a)*s_k))/(d_a)
         fp_a0 = f_prime(a_0)
         fp_al = f_prime(a_l)
         f_a0 = f_alpha(a_0)
@@ -165,71 +165,80 @@ class QuasiNewtonSolver(Solver):
         return a_0, f_a0
                 
     
-    def _update_hessian(self, x_k):
+    def _update_hessian(self, x_k, alpha):
         pass
      
-    def _newton_step(self, x_k):
+    def _newton_step(self, x_k, mode):
         s_k = -self.inverse_hessian@self._gradient(x_k)
         alpha, f_alpha = self._inexact_line_search(x_k, s_k)
         x_next = x_k + alpha*s_k
-        self._update_hessian(x_next)
+        self._update_hessian(x_next, alpha)
         return x_next
         
     
 class GoodBroydenSolver(QuasiNewtonSolver):
     
     
-    def _hessian(self, x_k):
-        delta =  self.alpha*(-self.hessian@self.gradient) #osäker på denna
-        gamma = self.gradient(x_k) - self.gradient(x_k-delta)
-        u = delta - self.hessian@gamma
+    def _update_hessian(self, x_k, alpha):
+        delta =  alpha*(self.inverse_hessian@self._gradient(x_k)) #osäker på denna
+        gamma = self._gradient(x_k) - self._gradient(x_k-delta)
+        u = delta - self.inverse_hessian@gamma
         a = 1 /u@gamma
-        return self.hessian + a*outer(u, u)
+        self.inverse_hessian = self.inverse_hessian + a*outer(u, u)
 
 #Allmänt osäker på denna bad Broyden-metoden, svårt att hitta info.       
 class BadBroydenSolver(QuasiNewtonSolver):
     
-    def _hessian(self, x_k):
-        delta =  self.alpha*(-self.hessian@self.gradient)
-        gamma = self.gradient(x_k) - self.gradient(x_k-delta)
-        u = gamma - self.hessian@delta 
-        a = 1 / gamma@gamma #Inte säker på om det ska vara gamma@gamma eller
-        # delta@delta
-        return self.hessian + a*outer(u,gamma)
+    def _update_hessian(self, x_k, alpha):
+        delta =  alpha*(self.inverse_hessian@self._gradient(x_k))
+        gamma = self._gradient(x_k) - self._gradient(x_k-delta)
+        u = gamma - self.inverse_hessian@delta 
+        a = 1 / gamma@gamma 
+        self.inverse_hessian = self.inverse_hessian + a*outer(u,gamma)
         
 class DFP2Solver(QuasiNewtonSolver):
     
-    def _hessian(self, x_k):
-        delta =  self.alpha*(-self.hessian@self.gradient)
-        gamma = self.gradient(x_k) - self.gradient(x_k-delta)
+    def _update_hessian(self, x_k, alpha):
+        delta =  alpha*(self.inverse_hessian@self._gradient(x_k))
+        gamma = self._gradient(x_k) - self._gradient(x_k-delta)
         u1 = outer(delta,delta)
-        a1 = delta@gamma
-        u2 = outer(self.hessian@gamma,gamma)@self.hessian
-        a2 = gamma@(self.hessian@gamma)
-        return self.hessian + a1*u1 - a2*u2
+        a1 = 1/delta@gamma
+        u2 = outer(self.inverse_hessian@gamma,gamma)@self.inverse_hessian
+        a2 = 1/gamma@(self.inverse_hessian@gamma)
+        self.inverse_hessian = self.inverse_hessian + a1*u1 - a2*u2
     
 class BFGS2Solver(QuasiNewtonSolver):
     
-    def _hessian(self, x_k):
-        delta =  self.alpha*(-self.hessian@self.gradient)
-        gamma = self.gradient(x_k) - self.gradient(x_k-delta)
-        hg = self.hessian@gamma
+    def _update_hessian(self, x_k, alpha):
+        delta =  alpha*(self.inverse_hessian@self._gradient(x_k))
+        gamma = self._gradient(x_k) - self._gradient(x_k-delta)
+        hg = self.inverse_hessian@gamma
         dg = delta@gamma
-        u1 = gamma@(self.hessian@gamma)
-        a1 = a2 = a3 = dg
+        u1 = gamma@hg
+        a1 = a2 = a3 = 1/dg
         u2 = outer(delta,delta)
-        u3 = outer(hg,delta) + outer(hg,delta).T #Transponat för motsat ordning 
-        return self.hessian+(1+a1*u1)*(a2*u2)-a3*u3
+        u3 = outer(dg, self.inverse_hessian) + outer(dg, self.inverse_hessian).T #Transponat för motsat ordning 
+        self.inverse_hessian = self.inverse_hessian+(1+a1*u1)*(a2*u2)-a3*u3
     
     
 if __name__ == '__main__':
     #function = lambda x: (x[0]-1)**2 + x[1]**2
     function = lambda x: 100*((x[1]-x[0]**2)**2)+(1-x[0])**2
-    op = OptimizationProblem(function, array([230,30]))
-    s = Solver(op)
-    zero = s.newton(mode='exact')
-    print(zero)
+    op = OptimizationProblem(function, array([5,5]))
+    #s = Solver(op)
+    GoodBoy = GoodBroydenSolver(op)
+    BadBoy = BadBroydenSolver(op)
+    DP2 = DFP2Solver(op)
+    BFGS = BFGS2Solver(op)
+    #zero1 = s.newton(mode='exact')
+    zero2 = GoodBoy.newton()
+    zero3 = BadBoy.newton()
+    zero4 = DP2.newton()
+    zero5 = BFGS.newton()
     
-        
-    
+    print('Regular newton gives: ',zero1, '\n')
+    print('Good Broyden gives: ',zero2, '\n')
+    print('Bad Broyden gives: ',zero3, '\n')
+    print('DFP2 gives: ',zero4, '\n')    
+    print('BFGS2 gives: ',zero5, '\n')
     
