@@ -24,19 +24,21 @@ class Solver:
     def __call__(self):
         pass
 
-    def newton(self, mode='default', tol = 1e-12, maxIteration = 99):
+    def newton(self, mode='default', tol = 1e-11, maxIteration = 1000):
         iterations = 0
         x_k = self.problem.x_0
         x_next = self._newton_step(x_k,mode)
         
-        while(norm(x_k-x_next)>tol and iterations < maxIteration):
+        while(norm(x_k-x_next)>tol
+              and norm(self._gradient(x_k)) > tol
+              and iterations < maxIteration):
             x_k = x_next
             x_next = self._newton_step(x_k, mode)
             iterations +=1
         if norm(x_k-x_next) > tol:
             pass
             #raise exception didn't converge 
-        
+        print("I converged in " ,iterations, " iterations")
         return x_next
     
     def _newton_step(self, x_k, mode):
@@ -45,9 +47,7 @@ class Solver:
             gradient = self.problem.gradient(x_k)
         else:
             gradient = self._gradient(x_k)
-
-        #Detta kommer behövas göras om, Hessian kan inte ligga här då den behöver 
-        #alpha.
+        
         hessian = self._hessian(x_k)
         
         if mode == 'default':
@@ -73,7 +73,7 @@ class Solver:
     def _search_dir(self, x_k):
         pass    
     
-    def exact_line_search(self, x_k, gradient, hessian, tol=1e-8, alpha_0=20):
+    def exact_line_search(self, x_k, gradient, hessian, tol=1e-2, alpha_0=1):
         
         delta_grad = self.delta_grad
         delta_hess = self.delta_hess
@@ -84,37 +84,21 @@ class Solver:
         sec_deriv = lambda alpha: (f_alpha(alpha+delta_hess) - 2*f_alpha(alpha) +
                                    f_alpha(alpha-delta_hess))/delta_hess**2
         alpha_k = alpha_0
-        alpha_next = alpha_next = alpha_k - deriv(alpha_k)/sec_deriv(alpha_k)
-        while abs(alpha_next-alpha_k) > tol:
+        print("deriv is :", deriv(alpha_k))
+        alpha_next = alpha_k - deriv(alpha_k)/sec_deriv(alpha_k)
+        
+        while abs(alpha_next-alpha_k) > tol and abs(deriv(alpha_k)) > tol:
             alpha_k = alpha_next
-            alpha_next = alpha_k - deriv(alpha_k)/sec_deriv(alpha_k)
+            sec_derivative = sec_deriv(alpha_k)
+            print("deriv is :", deriv(alpha_k))
+            if sec_derivative == 0:
+                return alpha_k
+            else:
+                alpha_next = alpha_k - deriv(alpha_k)/sec_derivative
         return alpha_next
     
-    #Some what of a skeleton    
-    def inexact_line_search(self, x_k, gradient, hessian, tol = 1e-8, alpha_0 = 20, 
-                            rho = 0.1, sigma = 0.7, tau = 0.1, chi = 9):
-
-        #Skulle kanske kunna vara hjälpfunktioner
-        if (condition):
-            lc = True
-        else:
-            lc = False
-            
-        if (condition):
-            rc = True
-        else:
-            rc = False
-        
-        while not (lc and rc):
-            if not lc:
-                #block1
-                #extrapolation
-            else:
-                #block2
-                #interpolation
-            lc = ...
-            rc = ...
-        return alpha_0
+    def inexact_line_search(self):
+        pass
     
     def _hessian(self, x_k):
         hessian = array([[self._second_part_div(x_k, i, j) for j in range(self.n)]
@@ -131,94 +115,60 @@ class Solver:
         return div
         
     
-class GoodBroydenSolver(QuasiNewton):
+# här använder jag mig av en faktor delta som är = alpha * s, där s ska vara s = -hessian(x_k) @ g(x_k)
+# Vet inte om detta skall deklareras någonstans i newton_step-metoden som ett attribut eller
+# om vi ska ha det som parametrar i varje _hessian skuggning. Lämnar detta öpper för er att bestämma
+# mitt förslag är att vi lägger till det som parametrar.
+# I övrigt är alla metoder implementerade.
+class GoodBroydenSolver(Solver):
     
-    def _hessian(self, x_k, alpha, hessian, gradient):
-        delta =  alpha*(hessian@gradient)
-        gamma = gradient(x_k) - gradient(x_k-delta)
-        u = delta - hessian@gamma
+    def _hessian(self, x_k):
+        delta =  self.alpha*(-self.hessian@self.gradient) #osäker på denna
+        gamma = self.gradient(x_k) - self.gradient(x_k-delta)
+        u = delta - self.hessian@gamma
         a = 1 /u@gamma
-        return hessian + a*outer(u, u)
-    
-class GoodBroydenSolverAlt(Solver):
-    def _hessian(self):
-        x_diff=x1-x0 #Skulle behöva implementeras
-        grad_diff=self.gradient(x1)-self.gradient(x0)
-        u=x_diff-self.hessian@grad_diff
-        nom=u@u.T
-        denom=1/u@grad_diff
-        self.hessian = self.hessian + nom*denom
-     
-class BadBroydenSolver(QuasiNewton):
-    
-    def _hessian(self, x_k, alpha, hessian, gradient):
-        delta =  alpha*(hessian@gradient)
-        gamma = gradient(x_k) - gradient(x_k-delta)
-        u = gamma - hessian@delta 
-        a = 1 / gamma@gamma
-        return hessian + a*outer(u,gamma)
+        return self.hessian + a*outer(u, u)
 
-class BadBroydenSolverAlt(Solver):
-    def _hessian(self):
+#Allmänt osäker på denna bad Broyden-metoden, svårt att hitta info.       
+class BadBroydenSolver(Solver):
+    
+    def _hessian(self, x_k):
+        delta =  self.alpha*(-self.hessian@self.gradient)
+        gamma = self.gradient(x_k) - self.gradient(x_k-delta)
+        u = gamma - self.hessian@delta 
+        a = 1 / gamma@gamma #Inte säker på om det ska vara gamma@gamma eller
+        # delta@delta
+        return self.hessian + a*outer(u,gamma)
         
-        x_diff=x1-x0#Skulle behöva implementeras
-        grad_diff=self.gradient(x1)-self.gradient(x0)
-        u=x_diff-self.hessian@grad_diff
-        nom=u@grad_diff.T
-        denom=1/grad_diff@grad_diff
-        return self.hessian + nom*denom
-            
-class DFP2Solver(QuasiNewton):
+class DFP2Solver(Solver):
     
-    def _hessian(self, x_k, alpha, hessian, gradient):
-        delta =  alpha*(hessian@gradient)
-        gamma = gradient(x_k) - gradient(x_k-delta)
-        hg = hessian@gamma
+    def _hessian(self, x_k):
+        delta =  self.alpha*(-self.hessian@self.gradient)
+        gamma = self.gradient(x_k) - self.gradient(x_k-delta)
         u1 = outer(delta,delta)
-        a1 = 1 / delta@gamma
-        u2 = outer(hg,gamma)@hessian
-        a2 = 1 / gamma@hg
-        return hessian + a1*u1 - a2*u2
+        a1 = delta@gamma
+        u2 = outer(self.hessian@gamma,gamma)@self.hessian
+        a2 = gamma@(self.hessian@gamma)
+        return self.hessian + a1*u1 - a2*u2
     
-class DFP2SolverAlt(Solver):
+class BFGS2Solver(Solver):
     
     def _hessian(self, x_k):
-        x_diff=x1-x0 #Skulle behöva implementeras
-        grad_diff=self.gradient(x1)-self.gradient(x0)
-        nom1=(self.hessian@(x_diff@x_diff.T))@self.hessian
-        denom1=1/((grad_diff.T@self.hessian)@grad_diff)
-        nom2=x_diff@x_diff.T
-        denom2=1/x_diff.T@grad_diff
-        return self.hessian - nom1*denom1 + nom2*denom2    
-    
-class BFGS2Solver(QuasiNewton):
-    
-    def _hessian(self, x_k, alpha, hessian, gradient):
-        delta =  alpha*(hessian@gradient)
-        gamma = gradient(x_k) - gradient(x_k-delta)
-        hg = hessian@gamma
+        delta =  self.alpha*(-self.hessian@self.gradient)
+        gamma = self.gradient(x_k) - self.gradient(x_k-delta)
+        hg = self.hessian@gamma
         dg = delta@gamma
-        u1 = gamma@hg
-        a1 = a2 = a3 = 1 / dg
+        u1 = gamma@(self.hessian@gamma)
+        a1 = a2 = a3 = dg
         u2 = outer(delta,delta)
-        u3 = outer(dg,hessian) + outer(dg,delta).T #Transponat för motsat ordning 
-        return hessian+(1+a1*u1)*(a2*u2)-a3*u3
+        u3 = outer(hg,delta) + outer(hg,delta).T #Transponat för motsat ordning 
+        return self.hessian+(1+a1*u1)*(a2*u2)-a3*u3
     
-class BFGS2Solver2Alt(Solver):
-    
-    def _hessian(self, x_k):
-        x_diff=x1-x0 #Skulle behöva implementeras
-        grad_diff=self.gradient(x1)-self.gradient(x0)
-        denom=1/(x_diff@grad_diff)
-        nom1=(grad_diff.T@(self.hessian))@(grad_diff)
-        nom2=x_diff@(x_diff.T)
-        nom3=(x_diff@grad_diff.T)@(self.hessian)+(self.hessian@(grad_diff@x_diff))
-        return self.hessian+(1+nom1*denom)*nom1*denom-nom3*denom    
     
 if __name__ == '__main__':
     #function = lambda x: (x[0]-1)**2 + x[1]**2
     function = lambda x: 100*((x[1]-x[0]**2)**2)+(1-x[0])**2
-    op = OptimizationProblem(function, array([2,2]))
+    op = OptimizationProblem(function, array([230,30]))
     s = Solver(op)
     zero = s.newton(mode='exact')
     print(zero)
