@@ -73,7 +73,7 @@ class Solver:
     def _search_dir(self, x_k):
         pass    
     
-    def exact_line_search(self, x_k, gradient, hessian, tol=1e-2, alpha_0=1):
+    def exact_line_search(self, x_k, gradient, hessian, tol=1e-6, alpha_0=1):
         
         delta_grad = self.delta_grad
         delta_hess = self.delta_hess
@@ -83,14 +83,15 @@ class Solver:
         deriv = lambda alpha: (f_alpha(alpha+delta_grad)-f_alpha(alpha-delta_grad))/(delta_grad*2)
         sec_deriv = lambda alpha: (f_alpha(alpha+delta_hess) - 2*f_alpha(alpha) +
                                    f_alpha(alpha-delta_hess))/delta_hess**2
+        if deriv(alpha_0) < tol:
+            return alpha_0
         alpha_k = alpha_0
-        print("deriv is :", deriv(alpha_k))
         alpha_next = alpha_k - deriv(alpha_k)/sec_deriv(alpha_k)
         
         while abs(alpha_next-alpha_k) > tol and abs(deriv(alpha_k)) > tol:
             alpha_k = alpha_next
             sec_derivative = sec_deriv(alpha_k)
-            print("deriv is :", deriv(alpha_k))
+            
             if sec_derivative == 0:
                 return alpha_k
             else:
