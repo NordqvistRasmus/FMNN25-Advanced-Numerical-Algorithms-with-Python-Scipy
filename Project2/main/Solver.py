@@ -98,9 +98,6 @@ class Solver:
                 alpha_next = alpha_k - deriv(alpha_k)/sec_derivative
         return alpha_next
     
-    def inexact_line_search(self):
-        pass
-    
     def _hessian(self, x_k):
         hessian = array([[self._second_part_div(x_k, i, j) for j in range(self.n)]
                           for i in range(self.n)])
@@ -121,7 +118,66 @@ class Solver:
 # om vi ska ha det som parametrar i varje _hessian skuggning. Lämnar detta öpper för er att bestämma
 # mitt förslag är att vi lägger till det som parametrar.
 # I övrigt är alla metoder implementerade.
-class GoodBroydenSolver(Solver):
+        
+class QuasiNewtonSolver(Solver):
+    
+    
+    def __init__(self, problem):
+        super().__init__(problem)
+        self.inverse_hessian = inv(super()._hessian(problem.x_k))
+        
+    def _inexact_line_search(self, x_k, s_k, a_0=1, a_l=0, a_u=1e99,
+                             rho=0.1, sigma=0.7, tau=0.1, chi=9):
+        
+        d_a = self.delta_grad
+        f_alpha = lambda alpha: self.function(x_k + alpha*s_k)
+        f_prime = lambda alpha: (self.function(x_k + (alpha + d_a)*s_k)
+                                - self.function(x_k +(alpha - d_a)*s_k))/(2*d_a)
+        fp_a0 = f_prime(a_0)
+        fp_al = f_prime(a_l)
+        f_a0 = f_alpha(a_0)
+        f_al = f_alpha(a_l)
+        LC = fp_a0 >= sigma*fp_al
+        RC = f_a0 <= f_al + rho*(a_0 - a_l)*fp_al
+        
+        while not (LC and RC):
+            if not (LC):
+                da_0 = (a_0 - a_l)*(fp_a0/(fp_al - fp_a0))
+                da_0 = max(da_0, tau*(a_0 - a_l))
+                da_0 - min(da_0, chi*(a_0 - a_l))
+                a_l = a_0
+                a_0 += da_0
+            else:
+                a_u = min(a_0, a_u)
+                ia_0 = (((a_0 - a_l)**2)*fp_al)/(2*(f_al - f_a0 + (a_0 - a_l)*fp_al))
+                ia_0 = max(ia_0, a_l + tau*(a_u - a_l))
+                ia_0 = min(ia_0, a_u - tau*(a_u - a_l))
+                a_0 = ia_0
+            
+            fp_a0 = f_prime(a_0)
+            fp_al = f_prime(a_l)
+            f_a0 = f_alpha(a_0)
+            f_al = f_alpha(a_l)
+            
+            LC = fp_a0 >= sigma*fp_al
+            RC = f_a0 <= f_al + rho*(a_0 - a_l)*fp_al
+            
+        return a_0, f_a0
+                
+    
+    def _update_hessian(self, x_k):
+        pass
+     
+    def _newton_step(self, x_k):
+        s_k = -self.inverse_hessian@self._gradient(x_k)
+        alpha, f_alpha = self._inexact_line_search(x_k, s_k)
+        x_next = x_k + alpha*s_k
+        self._update_hessian(x_next)
+        return x_next
+        
+    
+class GoodBroydenSolver(QuasiNewtonSolver):
+    
     
     def _hessian(self, x_k):
         delta =  self.alpha*(-self.hessian@self.gradient) #osäker på denna
@@ -131,7 +187,7 @@ class GoodBroydenSolver(Solver):
         return self.hessian + a*outer(u, u)
 
 #Allmänt osäker på denna bad Broyden-metoden, svårt att hitta info.       
-class BadBroydenSolver(Solver):
+class BadBroydenSolver(QuasiNewtonSolver):
     
     def _hessian(self, x_k):
         delta =  self.alpha*(-self.hessian@self.gradient)
@@ -141,7 +197,7 @@ class BadBroydenSolver(Solver):
         # delta@delta
         return self.hessian + a*outer(u,gamma)
         
-class DFP2Solver(Solver):
+class DFP2Solver(QuasiNewtonSolver):
     
     def _hessian(self, x_k):
         delta =  self.alpha*(-self.hessian@self.gradient)
@@ -152,7 +208,7 @@ class DFP2Solver(Solver):
         a2 = gamma@(self.hessian@gamma)
         return self.hessian + a1*u1 - a2*u2
     
-class BFGS2Solver(Solver):
+class BFGS2Solver(QuasiNewtonSolver):
     
     def _hessian(self, x_k):
         delta =  self.alpha*(-self.hessian@self.gradient)
