@@ -53,12 +53,12 @@ class Test_CubicSpline(unittest.TestCase):
         self.CONTROL = None
         self.KNOTS = None
         self.cs = None
-    
+        
     def test_exampleTest(self):
-
+        
         result = self.cs.point_eval(0.2)
         expected = array([-31.90219167, 6.47655833])
-
+        
         self.assertAlmostEqual(result[0],expected[0])
         self.assertAlmostEqual(result[1],expected[1])
 
