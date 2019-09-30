@@ -144,7 +144,7 @@ class QuasiNewtonSolver(Solver):
             if not (LC):
                 da_0 = (a_0 - a_l)*(fp_a0/(fp_al - fp_a0))
                 da_0 = max(da_0, tau*(a_0 - a_l))
-                da_0 - min(da_0, chi*(a_0 - a_l))
+                da_0 = min(da_0, chi*(a_0 - a_l))
                 a_l = a_0
                 a_0 += da_0
             else:
