@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Sep 25 21:12:56 2019
-@author: Mattias Lundström1
+@author: Mattias Lundström, Pontus Nordqvist, Johan Liljegren, Arvid Rolaner
 """
 from  scipy import *
 from scipy.linalg import inv
@@ -126,19 +126,24 @@ class QuasiNewtonSolver(Solver):
         super().__init__(problem)
         self.inverse_hessian = inv(super()._hessian(problem.x_0))
         
-    def _inexact_line_search(self, x_k, s_k, a_l=0, a_u=1e5,
+    def _inexact_line_search(self, x_k, s_k, mode, a_l=0, a_u=1e5,
                              rho=0.1, sigma=0.7, tau=0.1, chi=9):
         a_0 = (a_u - a_l)/2
         d_a = self.delta_grad
         f_alpha = lambda alpha: self.function(x_k + alpha*s_k)
-        f_prime = lambda alpha: (self.function(x_k + (alpha)*s_k)
-                                - self.function(x_k +(alpha - d_a)*s_k))/(d_a)
+        f_prime = lambda alpha: (self.function(x_k + (alpha+d_a)*s_k)
+                                - self.function(x_k +(alpha)*s_k))/(d_a)
         fp_a0 = f_prime(a_0)
         fp_al = f_prime(a_l)
         f_a0 = f_alpha(a_0)
         f_al = f_alpha(a_l)
-        LC = fp_a0 >= sigma*fp_al
-        RC = f_a0 <= f_al + rho*(a_0 - a_l)*fp_al
+        
+        if mode == 'wolfe':
+            LC = fp_a0 >= sigma*fp_al
+            RC = f_a0 <= f_al + rho*(a_0 - a_l)*fp_al
+        if mode == 'goldstein':
+            LC = f_a0 >= f_al + (1-rho)*(a_0-a_l)*fp_al
+            RC = f_al <= f_al + rho*(a_0-a_l)*fp_al
         
         while not (LC and RC):
             if not (LC):
@@ -158,30 +163,36 @@ class QuasiNewtonSolver(Solver):
             fp_al = f_prime(a_l)
             f_a0 = f_alpha(a_0)
             f_al = f_alpha(a_l)
-            
-            LC = fp_a0 >= sigma*fp_al
-            RC = f_a0 <= f_al + rho*(a_0 - a_l)*fp_al
+            if mode == 'wolfe':
+                LC = fp_a0 >= sigma*fp_al
+                RC = f_a0 <= f_al + rho*(a_0 - a_l)*fp_al
+            if mode == 'goldstein':
+                LC = f_a0 >= f_al + (1-rho)*(a_0-a_l)*fp_al
+                RC = f_al <= f_al + rho*(a_0-a_l)*fp_al
             
         return a_0, f_a0
                 
     
-    def _update_hessian(self, x_k, alpha):
+    def _update_hessian(self, x_k, x_next, alpha):
         pass
      
     def _newton_step(self, x_k, mode):
         s_k = -self.inverse_hessian@self._gradient(x_k)
-        alpha, f_alpha = self._inexact_line_search(x_k, s_k)
+        alpha, f_alpha = self._inexact_line_search(x_k, s_k, 'wolfe')
         x_next = x_k + alpha*s_k
-        self._update_hessian(x_next, alpha)
+        self._update_hessian(x_k, x_next, alpha)
         return x_next
         
     
 class GoodBroydenSolver(QuasiNewtonSolver):
     
     
-    def _update_hessian(self, x_k, alpha):
-        delta =  alpha*(self.inverse_hessian@self._gradient(x_k)) #osäker på denna
-        gamma = self._gradient(x_k) - self._gradient(x_k-delta)
+    def _update_hessian(self, x_k, x_next, alpha):
+        #delta =  alpha*(self.inverse_hessian@self._gradient(x_k)) #osäker på denna
+        delta = x_next-x_k
+        print('x_next: ', x_next,'x_k: ', x_k, 'alpha: ', alpha)
+        gamma = self._gradient(x_next) - self._gradient(x_k)
+        print('gammahamma',gamma)
         u = delta - self.inverse_hessian@gamma
         a = 1 /u@gamma
         self.inverse_hessian = self.inverse_hessian + a*outer(u, u)
@@ -227,18 +238,18 @@ if __name__ == '__main__':
     op = OptimizationProblem(function, array([5,5]))
     #s = Solver(op)
     GoodBoy = GoodBroydenSolver(op)
-    BadBoy = BadBroydenSolver(op)
-    DP2 = DFP2Solver(op)
-    BFGS = BFGS2Solver(op)
+    #BadBoy = BadBroydenSolver(op)
+    #DP2 = DFP2Solver(op)
+    #BFGS = BFGS2Solver(op)
     #zero1 = s.newton(mode='exact')
     zero2 = GoodBoy.newton()
-    zero3 = BadBoy.newton()
-    zero4 = DP2.newton()
-    zero5 = BFGS.newton()
+    #zero3 = BadBoy.newton()
+    #zero4 = DP2.newton()
+    #zero5 = BFGS.newton()
     
-    print('Regular newton gives: ',zero1, '\n')
+    #print('Regular newton gives: ',zero1, '\n')
     print('Good Broyden gives: ',zero2, '\n')
-    print('Bad Broyden gives: ',zero3, '\n')
-    print('DFP2 gives: ',zero4, '\n')    
-    print('BFGS2 gives: ',zero5, '\n')
+    #print('Bad Broyden gives: ',zero3, '\n')
+    #print('DFP2 gives: ',zero4, '\n')    
+    #print('BFGS2 gives: ',zero5, '\n')
     
