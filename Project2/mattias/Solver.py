@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Sep 25 21:12:56 2019
-@author: Mattias Lundström1
+@author: Mattias Lundström, Pontus Nordqvist, Johan Liljegren, Arvid Rolaner
 """
 from  scipy import *
 from scipy.linalg import inv
@@ -27,7 +27,7 @@ class Solver:
     def newton(self, mode='default', tol = 1e-11, maxIteration = 1000):
         iterations = 0
         x_k = self.problem.x_0
-        x_next = self._newton_step(x_k,mode)
+        x_next = self._newton_step(x_k, mode)
         
         while(norm(x_k-x_next)>tol
               and norm(self._gradient(x_k)) > tol
@@ -36,9 +36,14 @@ class Solver:
             x_next = self._newton_step(x_k, mode)
             iterations +=1
         if norm(x_k-x_next) > tol:
+            #Might lead to wrong answer?
             pass
-            #raise exception didn't converge 
-        print("I converged in " ,iterations, " iterations")
+        if maxIteration == iterations:
+            print('Mode:', mode, "------ Did not converge in" ,iterations, "iterations. \n")
+            return x_next
+            
+        print('Mode:', mode, "------ Converged in" ,iterations, "iterations. \n")
+        #print('Norm of gradient:', norm(self._gradient(x_k)))
         return x_next
     
     def _newton_step(self, x_k, mode):
@@ -64,16 +69,26 @@ class Solver:
         return x_next
     
     def _gradient(self, x_k):
-        gradient = array([(self.function(x_k + self.delta_values_grad[:,i])
+        """
+        Added because we need to opt have gradient //M
+        """
+        if self.problem.gradient is None:
+            gradient = array([(self.function(x_k + self.delta_values_grad[:,i])
                             -self.function(x_k - self.delta_values_grad[:,i]))/(2*self.delta_grad)
                             for i in range(self.n)])
-        print(norm(gradient))
-        return gradient
+            return gradient
+        else:
+            return self.problem.gradient(x_k) #If we have gradient from problem (as a function)
+        """
+        Debug print
+        """
+        #print(norm(gradient))
+        #return gradient
     
     def _search_dir(self, x_k):
         pass    
     
-    def exact_line_search(self, x_k, gradient, hessian, tol=1e-2, alpha_0=1):
+    def exact_line_search(self, x_k, gradient, hessian, tol=1e-6, alpha_0=1):
         
         delta_grad = self.delta_grad
         delta_hess = self.delta_hess
@@ -83,22 +98,20 @@ class Solver:
         deriv = lambda alpha: (f_alpha(alpha+delta_grad)-f_alpha(alpha-delta_grad))/(delta_grad*2)
         sec_deriv = lambda alpha: (f_alpha(alpha+delta_hess) - 2*f_alpha(alpha) +
                                    f_alpha(alpha-delta_hess))/delta_hess**2
+        if deriv(alpha_0) < tol:
+            return alpha_0
         alpha_k = alpha_0
-        print("deriv is :", deriv(alpha_k))
         alpha_next = alpha_k - deriv(alpha_k)/sec_deriv(alpha_k)
         
         while abs(alpha_next-alpha_k) > tol and abs(deriv(alpha_k)) > tol:
             alpha_k = alpha_next
             sec_derivative = sec_deriv(alpha_k)
-            print("deriv is :", deriv(alpha_k))
+            
             if sec_derivative == 0:
                 return alpha_k
             else:
                 alpha_next = alpha_k - deriv(alpha_k)/sec_derivative
         return alpha_next
-    
-    def inexact_line_search(self):
-        pass
     
     def _hessian(self, x_k):
         hessian = array([[self._second_part_div(x_k, i, j) for j in range(self.n)]
@@ -120,59 +133,141 @@ class Solver:
 # om vi ska ha det som parametrar i varje _hessian skuggning. Lämnar detta öpper för er att bestämma
 # mitt förslag är att vi lägger till det som parametrar.
 # I övrigt är alla metoder implementerade.
-class GoodBroydenSolver(Solver):
+        
+class QuasiNewtonSolver(Solver):
     
-    def _hessian(self, x_k):
-        delta =  self.alpha*(-self.hessian@self.gradient) #osäker på denna
-        gamma = self.gradient(x_k) - self.gradient(x_k-delta)
-        u = delta - self.hessian@gamma
+    
+    def __init__(self, problem):
+        super().__init__(problem)
+        self.inverse_hessian = inv(super()._hessian(problem.x_0))
+        
+    def _inexact_line_search(self, x_k, s_k, mode, a_l=0, a_u=1e5,
+                             rho=0.1, sigma=0.7, tau=0.1, chi=9):
+        a_0 = (a_u - a_l)/2
+        d_a = self.delta_grad
+        f_alpha = lambda alpha: self.function(x_k + alpha*s_k)
+        f_prime = lambda alpha: (self.function(x_k + (alpha+d_a)*s_k)
+                                - self.function(x_k +(alpha)*s_k))/(d_a)
+        fp_a0 = f_prime(a_0)
+        fp_al = f_prime(a_l)
+        f_a0 = f_alpha(a_0)
+        f_al = f_alpha(a_l)
+        
+        if mode == 'wolfe':
+            LC = fp_a0 >= sigma*fp_al
+            RC = f_a0 <= f_al + rho*(a_0 - a_l)*fp_al
+        if mode == 'goldstein':
+            LC = f_a0 >= f_al + (1-rho)*(a_0-a_l)*fp_al
+            RC = f_al <= f_al + rho*(a_0-a_l)*fp_al
+        
+        while not (LC and RC):
+            if not (LC):
+                da_0 = (a_0 - a_l)*(fp_a0/(fp_al - fp_a0))
+                da_0 = max(da_0, tau*(a_0 - a_l))
+                da_0 = min(da_0, chi*(a_0 - a_l))
+                a_l = a_0
+                a_0 += da_0
+            else:
+                a_u = min(a_0, a_u)
+                ia_0 = (((a_0 - a_l)**2)*fp_al)/(2*(f_al - f_a0 + (a_0 - a_l)*fp_al))
+                ia_0 = max(ia_0, a_l + tau*(a_u - a_l))
+                ia_0 = min(ia_0, a_u - tau*(a_u - a_l))
+                a_0 = ia_0
+            
+            fp_a0 = f_prime(a_0)
+            fp_al = f_prime(a_l)
+            f_a0 = f_alpha(a_0)
+            f_al = f_alpha(a_l)
+            if mode == 'wolfe':
+                LC = fp_a0 >= sigma*fp_al
+                RC = f_a0 <= f_al + rho*(a_0 - a_l)*fp_al
+            if mode == 'goldstein':
+                LC = f_a0 >= f_al + (1-rho)*(a_0-a_l)*fp_al
+                RC = f_al <= f_al + rho*(a_0-a_l)*fp_al
+            
+        return a_0, f_a0
+                
+    
+    def _update_hessian(self, x_k, x_next, alpha):
+        pass
+     
+    def _newton_step(self, x_k, mode):
+        s_k = -self.inverse_hessian@self._gradient(x_k)
+        alpha, f_alpha = self._inexact_line_search(x_k, s_k, 'wolfe')
+        x_next = x_k + alpha*s_k
+        self._update_hessian(x_k, x_next, alpha)
+        return x_next
+        
+    
+class GoodBroydenSolver(QuasiNewtonSolver):
+    
+    
+    def _update_hessian(self, x_k, x_next, alpha):
+        #delta =  alpha*(self.inverse_hessian@self._gradient(x_k)) #osäker på denna
+        delta = x_next-x_k
+        print('x_next: ', x_next,'x_k: ', x_k, 'alpha: ', alpha)
+        gamma = self._gradient(x_next) - self._gradient(x_k)
+        print('gammahamma',gamma)
+        u = delta - self.inverse_hessian@gamma
         a = 1 /u@gamma
-        return self.hessian + a*outer(u, u)
+        self.inverse_hessian = self.inverse_hessian + a*outer(u, u)
 
 #Allmänt osäker på denna bad Broyden-metoden, svårt att hitta info.       
-class BadBroydenSolver(Solver):
+class BadBroydenSolver(QuasiNewtonSolver):
     
-    def _hessian(self, x_k):
-        delta =  self.alpha*(-self.hessian@self.gradient)
-        gamma = self.gradient(x_k) - self.gradient(x_k-delta)
-        u = gamma - self.hessian@delta 
-        a = 1 / gamma@gamma #Inte säker på om det ska vara gamma@gamma eller
-        # delta@delta
-        return self.hessian + a*outer(u,gamma)
+    def _update_hessian(self, x_k, alpha):
+        delta =  alpha*(self.inverse_hessian@self._gradient(x_k))
+        gamma = self._gradient(x_k) - self._gradient(x_k-delta)
+        u = gamma - self.inverse_hessian@delta 
+        a = 1 / gamma@gamma 
+        self.inverse_hessian = self.inverse_hessian + a*outer(u,gamma)
         
-class DFP2Solver(Solver):
+class DFP2Solver(QuasiNewtonSolver):
     
-    def _hessian(self, x_k):
-        delta =  self.alpha*(-self.hessian@self.gradient)
-        gamma = self.gradient(x_k) - self.gradient(x_k-delta)
+    def _update_hessian(self, x_k, alpha):
+        delta =  alpha*(self.inverse_hessian@self._gradient(x_k))
+        gamma = self._gradient(x_k) - self._gradient(x_k-delta)
         u1 = outer(delta,delta)
-        a1 = delta@gamma
-        u2 = outer(self.hessian@gamma,gamma)@self.hessian
-        a2 = gamma@(self.hessian@gamma)
-        return self.hessian + a1*u1 - a2*u2
+        a1 = 1/delta@gamma
+        u2 = outer(self.inverse_hessian@gamma,gamma)@self.inverse_hessian
+        a2 = 1/gamma@(self.inverse_hessian@gamma)
+        self.inverse_hessian = self.inverse_hessian + a1*u1 - a2*u2
     
-class BFGS2Solver(Solver):
+class BFGS2Solver(QuasiNewtonSolver):
     
-    def _hessian(self, x_k):
-        delta =  self.alpha*(-self.hessian@self.gradient)
-        gamma = self.gradient(x_k) - self.gradient(x_k-delta)
-        hg = self.hessian@gamma
+    def _update_hessian(self, x_k, alpha):
+        delta =  alpha*(self.inverse_hessian@self._gradient(x_k))
+        gamma = self._gradient(x_k) - self._gradient(x_k-delta)
+        hg = self.inverse_hessian@gamma
         dg = delta@gamma
-        u1 = gamma@(self.hessian@gamma)
-        a1 = a2 = a3 = dg
+        u1 = gamma@hg
+        a1 = a2 = a3 = 1/dg
         u2 = outer(delta,delta)
-        u3 = outer(hg,delta) + outer(hg,delta).T #Transponat för motsat ordning 
-        return self.hessian+(1+a1*u1)*(a2*u2)-a3*u3
+        u3 = outer(dg, self.inverse_hessian) + outer(dg, self.inverse_hessian).T #Transponat för motsat ordning 
+        self.inverse_hessian = self.inverse_hessian+(1+a1*u1)*(a2*u2)-a3*u3
     
     
 if __name__ == '__main__':
     #function = lambda x: (x[0]-1)**2 + x[1]**2
     function = lambda x: 100*((x[1]-x[0]**2)**2)+(1-x[0])**2
-    op = OptimizationProblem(function, array([699,699**2]))
+    op = OptimizationProblem(function, array([5,5]))
     s = Solver(op)
-    zero = s.newton(mode='exact')
+    zero = s.newton(mode = 'default')
     print(zero)
     
-        
+    #GoodBoy = GoodBroydenSolver(op)
+    #BadBoy = BadBroydenSolver(op)
+    #DP2 = DFP2Solver(op)
+    #BFGS = BFGS2Solver(op)
+    #zero1 = s.newton(mode='exact')
+    #zero2 = GoodBoy.newton()
+    #zero3 = BadBoy.newton()
+    #zero4 = DP2.newton()
+    #zero5 = BFGS.newton()
     
+    #print('Regular newton gives: ',zero1, '\n')
+    #print('Good Broyden gives: ',zero2, '\n')
+    #print('Bad Broyden gives: ',zero3, '\n')
+    #print('DFP2 gives: ',zero4, '\n')    
+    #print('BFGS2 gives: ',zero5, '\n')
     
