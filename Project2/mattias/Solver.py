@@ -233,16 +233,16 @@ class QuasiNewtonSolver(Solver):
         s_k = s_k/norm(s_k)
         alpha, f_alpha = self._inexact_line_search(x_k, s_k, 'wolfe')
         x_next = x_k + alpha*s_k
-        self._update_hessian(x_k, x_next, alpha)
+        self._update_hessian(x_k, alpha)
         return x_next
         
     
 class GoodBroydenSolver(QuasiNewtonSolver):
     
     
-    def _update_hessian(self, x_k, x_next, alpha):
-        #delta =  alpha*(self.inverse_hessian@self._gradient(x_k)) #osäker på denna
-        delta = x_next-x_k
+    def _update_hessian(self, x_k, alpha):
+        delta =  alpha*(self.inverse_hessian@self._gradient(x_k)) #osäker på denna
+        #delta = x_next-x_k
         print('x_next: ', x_next,'x_k: ', x_k, 'alpha: ', alpha)
         gamma = self._gradient(x_next) - self._gradient(x_k)
         print('gammahamma',gamma)
