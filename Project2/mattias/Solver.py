@@ -59,10 +59,6 @@ class Solver:
       
         plt.show()
     
-    
-
-
-
     def newton(self, mode='default', tol = 1e-8, maxIteration = 1000):
         iterations = 0
         x_k = self.problem.x_0
@@ -299,18 +295,18 @@ if __name__ == '__main__':
     #zero = s.newton(mode = 'default')
     #print(zero)
     
-    #GoodBoy = GoodBroydenSolver(op)
+    GoodBoy = GoodBroydenSolver(op)
     #BadBoy = BadBroydenSolver(op)
     #DP2 = DFP2Solver(op)
     #BFGS = BFGS2Solver(op)
     #zero1 = s.newton(mode='exact')
-    #zero2 = GoodBoy.newton()
+    zero2 = GoodBoy.newton()
     #zero3 = BadBoy.newton()
     #zero4 = DP2.newton()
     #zero5 = BFGS.newton()
     
     #print('Regular newton gives: ',zero1, '\n')
-    #print('Good Broyden gives: ',zero2, '\n')
+    print('Good Broyden gives: ',zero2, '\n')
     #print('Bad Broyden gives: ',zero3, '\n')
     #print('DFP2 gives: ',zero4, '\n')    
     #print('BFGS2 gives: ',zero5, '\n')
