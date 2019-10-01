@@ -180,7 +180,7 @@ class QuasiNewtonSolver(Solver):
         
     def _inexact_line_search(self, x_k, s_k, mode, a_l=0, a_u=1e5,
                              rho=0.1, sigma=0.7, tau=0.1, chi=9):
-        a_0 = 1
+        a_0 = (a_u-a_l)/2
         d_a = self.delta_grad
         f_alpha = lambda alpha: self.function(x_k + alpha*s_k)
         f_prime = lambda alpha: (self.function(x_k + (alpha+d_a)*s_k)
