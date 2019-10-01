@@ -68,7 +68,7 @@ class Test_Optimization(unittest.TestCase):
     def test_newton_converge_fail(self):
         self.setGuess(array([699, 30300]))
         s = Solver(self.problem)
-        result = s.newton(mode = 'default', maxIteration = 699)
+        result = s.newton(mode = 'default', maxIteration = 100)
         expected = array([1., 1.])
         close = np.isclose(result, expected) #Check that the result is 'Not almost equal' the expected value
         self.assertFalse(close[0])

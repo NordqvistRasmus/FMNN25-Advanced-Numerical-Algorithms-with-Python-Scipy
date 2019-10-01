@@ -8,6 +8,13 @@ from  scipy import *
 from scipy.linalg import inv
 from  pylab import *
 from OptimizationProblem import OptimizationProblem
+from scipy.optimize import minimize, rosen
+
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+from matplotlib.colors import LogNorm
+import matplotlib.pyplot as plt
+import numpy as np
     
 class Solver:
     
@@ -23,8 +30,40 @@ class Solver:
     
     def __call__(self):
         pass
+    
+    #Plotting code partly from 'Three-Dimensional Plotting in Matplotlib' - Jake VanderPlas
+    def plot(self, function, type = 'surface'): 
+        
+        if (type == 'surface'):
+            x = np.linspace(-2,2,250)
+            y = np.linspace(-1,3,250)
+            X, Y = np.meshgrid(x, y)
+            Z = rosen([X, Y])
+            ax = plt.axes(projection='3d')
+            ax.plot_surface(X,Y,Z, norm = LogNorm(), rstride = 5, cstride = 5, cmap = 'RdGy_r', alpha = .9, edgecolor = 'none')
+            ax.set_title('Rosenbrock function - Surface plot')
+            ax.set_xlabel('x_1')
+            ax.set_ylabel('x_2')
+            ax.set_zlabel('f(x)')
 
-    def newton(self, mode='default', tol = 1e-11, maxIteration = 1000):
+        if (type == 'contour'):
+            ax = plt.axes()
+            x = np.linspace(-5,5,500)
+            y = np.linspace(-5,5,500)
+            X, Y = np.meshgrid(x, y)
+            Z = rosen([X, Y])
+            plt.contour(X, Y, Z, 150, cmap = 'RdGy');
+            ax.set_title('Rosenbrock function - Contour plot')
+            ax.set_xlabel('x_1')
+            ax.set_ylabel('x_2')
+      
+        plt.show()
+    
+    
+
+
+
+    def newton(self, mode='default', tol = 1e-8, maxIteration = 1000):
         iterations = 0
         x_k = self.problem.x_0
         x_next = self._newton_step(x_k, mode)
@@ -73,8 +112,9 @@ class Solver:
         Added because we need to opt have gradient //M
         """
         if self.problem.gradient is None:
-            gradient = array([(self.function(x_k + self.delta_values_grad[:,i])
-                            -self.function(x_k - self.delta_values_grad[:,i]))/(2*self.delta_grad)
+            gradient = array([(self.function(x_k + norm(x_k)*self.delta_values_grad[:,i])
+                            -self.function(x_k - norm(x_k)*self.delta_values_grad[:,i]))
+                            /(2*norm(x_k)*self.delta_grad)
                             for i in range(self.n)])
             return gradient
         else:
@@ -139,6 +179,7 @@ class QuasiNewtonSolver(Solver):
     
     def __init__(self, problem):
         super().__init__(problem)
+        self.hessian = super()._hessian(problem.x_0)
         self.inverse_hessian = inv(super()._hessian(problem.x_0))
         
     def _inexact_line_search(self, x_k, s_k, mode, a_l=0, a_u=1e5,
@@ -192,7 +233,8 @@ class QuasiNewtonSolver(Solver):
         pass
      
     def _newton_step(self, x_k, mode):
-        s_k = -self.inverse_hessian@self._gradient(x_k)
+        s_k = (-1)*self.inverse_hessian@self._gradient(x_k)
+        s_k = s_k/norm(s_k)
         alpha, f_alpha = self._inexact_line_search(x_k, s_k, 'wolfe')
         x_next = x_k + alpha*s_k
         self._update_hessian(x_k, x_next, alpha)
@@ -252,8 +294,10 @@ if __name__ == '__main__':
     function = lambda x: 100*((x[1]-x[0]**2)**2)+(1-x[0])**2
     op = OptimizationProblem(function, array([5,5]))
     s = Solver(op)
-    zero = s.newton(mode = 'default')
-    print(zero)
+    s.plot(rosen, 'surface')
+    #s.plot(rosen, 'contour')
+    #zero = s.newton(mode = 'default')
+    #print(zero)
     
     #GoodBoy = GoodBroydenSolver(op)
     #BadBoy = BadBroydenSolver(op)

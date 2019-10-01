@@ -8,6 +8,13 @@ from  scipy import *
 from scipy.linalg import inv
 from  pylab import *
 from OptimizationProblem import OptimizationProblem
+from scipy.optimize import minimize, rosen
+
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+from matplotlib.colors import LogNorm
+import matplotlib.pyplot as plt
+import numpy as np
     
 class Solver:
     
@@ -23,6 +30,38 @@ class Solver:
     
     def __call__(self):
         pass
+    
+    #Plotting code partly from 'Three-Dimensional Plotting in Matplotlib' - Jake VanderPlas
+    def plot(self, function, type = 'surface'): 
+        
+        if (type == 'surface'):
+            x = np.linspace(-2,2,250)
+            y = np.linspace(-1,3,250)
+            X, Y = np.meshgrid(x, y)
+            Z = rosen([X, Y])
+            ax = plt.axes(projection='3d')
+            ax.plot_surface(X,Y,Z, norm = LogNorm(), rstride = 5, cstride = 5, cmap = 'RdGy_r', alpha = .9, edgecolor = 'none')
+            ax.set_title('Rosenbrock function - Surface plot')
+            ax.set_xlabel('x_1')
+            ax.set_ylabel('x_2')
+            ax.set_zlabel('f(x)')
+
+        if (type == 'contour'):
+            ax = plt.axes()
+            x = np.linspace(-5,5,500)
+            y = np.linspace(-5,5,500)
+            X, Y = np.meshgrid(x, y)
+            Z = rosen([X, Y])
+            plt.contour(X, Y, Z, 150, cmap = 'RdGy');
+            ax.set_title('Rosenbrock function - Contour plot')
+            ax.set_xlabel('x_1')
+            ax.set_ylabel('x_2')
+      
+        plt.show()
+    
+    
+
+
 
     def newton(self, mode='default', tol = 1e-8, maxIteration = 1000):
         iterations = 0
@@ -255,21 +294,23 @@ if __name__ == '__main__':
     function = lambda x: 100*((x[1]-x[0]**2)**2)+(1-x[0])**2
     op = OptimizationProblem(function, array([5,5]))
     s = Solver(op)
+    s.plot(rosen, 'surface')
+    #s.plot(rosen, 'contour')
     #zero = s.newton(mode = 'default')
     #print(zero)
     
-    GoodBoy = GoodBroydenSolver(op)
+    #GoodBoy = GoodBroydenSolver(op)
     #BadBoy = BadBroydenSolver(op)
     #DP2 = DFP2Solver(op)
     #BFGS = BFGS2Solver(op)
     #zero1 = s.newton(mode='exact')
-    zero2 = GoodBoy.newton()
+    #zero2 = GoodBoy.newton()
     #zero3 = BadBoy.newton()
     #zero4 = DP2.newton()
     #zero5 = BFGS.newton()
     
     #print('Regular newton gives: ',zero1, '\n')
-    print('Good Broyden gives: ',zero2, '\n')
+    #print('Good Broyden gives: ',zero2, '\n')
     #print('Bad Broyden gives: ',zero3, '\n')
     #print('DFP2 gives: ',zero4, '\n')    
     #print('BFGS2 gives: ',zero5, '\n')
