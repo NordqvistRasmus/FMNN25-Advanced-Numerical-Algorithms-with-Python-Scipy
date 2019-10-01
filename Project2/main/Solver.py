@@ -24,7 +24,7 @@ class Solver:
     def __call__(self):
         pass
 
-    def newton(self, mode='default', tol = 1e-11, maxIteration = 1000):
+    def newton(self, mode='default', tol = 1e-8, maxIteration = 1000):
         iterations = 0
         x_k = self.problem.x_0
         x_next = self._newton_step(x_k, mode)
@@ -73,8 +73,9 @@ class Solver:
         Added because we need to opt have gradient //M
         """
         if self.problem.gradient is None:
-            gradient = array([(self.function(x_k + self.delta_values_grad[:,i])
-                            -self.function(x_k - self.delta_values_grad[:,i]))/(2*self.delta_grad)
+            gradient = array([(self.function(x_k + norm(x_k)*self.delta_values_grad[:,i])
+                            -self.function(x_k - norm(x_k)*self.delta_values_grad[:,i]))
+                            /(2*norm(x_k)*self.delta_grad)
                             for i in range(self.n)])
             return gradient
         else:
@@ -139,6 +140,7 @@ class QuasiNewtonSolver(Solver):
     
     def __init__(self, problem):
         super().__init__(problem)
+        self.hessian = super()._hessian(problem.x_0)
         self.inverse_hessian = inv(super()._hessian(problem.x_0))
         
     def _inexact_line_search(self, x_k, s_k, mode, a_l=0, a_u=1e5,
@@ -192,7 +194,8 @@ class QuasiNewtonSolver(Solver):
         pass
      
     def _newton_step(self, x_k, mode):
-        s_k = -self.inverse_hessian@self._gradient(x_k)
+        s_k = (-1)*self.inverse_hessian@self._gradient(x_k)
+        s_k = s_k/norm(s_k)
         alpha, f_alpha = self._inexact_line_search(x_k, s_k, 'wolfe')
         x_next = x_k + alpha*s_k
         self._update_hessian(x_k, x_next, alpha)
@@ -252,21 +255,21 @@ if __name__ == '__main__':
     function = lambda x: 100*((x[1]-x[0]**2)**2)+(1-x[0])**2
     op = OptimizationProblem(function, array([5,5]))
     s = Solver(op)
-    zero = s.newton(mode = 'default')
-    print(zero)
+    #zero = s.newton(mode = 'default')
+    #print(zero)
     
-    #GoodBoy = GoodBroydenSolver(op)
+    GoodBoy = GoodBroydenSolver(op)
     #BadBoy = BadBroydenSolver(op)
     #DP2 = DFP2Solver(op)
     #BFGS = BFGS2Solver(op)
     #zero1 = s.newton(mode='exact')
-    #zero2 = GoodBoy.newton()
+    zero2 = GoodBoy.newton()
     #zero3 = BadBoy.newton()
     #zero4 = DP2.newton()
     #zero5 = BFGS.newton()
     
     #print('Regular newton gives: ',zero1, '\n')
-    #print('Good Broyden gives: ',zero2, '\n')
+    print('Good Broyden gives: ',zero2, '\n')
     #print('Bad Broyden gives: ',zero3, '\n')
     #print('DFP2 gives: ',zero4, '\n')    
     #print('BFGS2 gives: ',zero5, '\n')
