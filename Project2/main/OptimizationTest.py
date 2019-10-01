@@ -8,23 +8,12 @@ Created on Thu Sep 26 17:55:09 2019
 from  pylab import array
 import numpy as np
 from scipy.optimize import minimize, rosen, fmin_bfgs
-from Solver import Solver
+from Solver import Solver, QuasiNewtonSolver, BFGS2Solver, DFP2Solver, BadBroydenSolver, GoodBroydenSolver
 from OptimizationProblem import OptimizationProblem
 from chebyquad_problem import chebyquad, gradchebyquad
 
 
 import unittest
-
-
-#class exact_line(TestCase):
-    
-    #def setUp(self):
-    #   Någonstans här ska man väl inputa en gissning?
-        #prob = OptimizationProblem(rosen)
-        #s = Solver(prob)
-        #res = s.newton(mode='exact', tol = 1e-6)
-        #expected = [1,1]
-        #self.assertAlmostEqual(res, expected, delta = 1e-6)
 
 
 class Test_Optimization(unittest.TestCase):    
@@ -58,7 +47,7 @@ class Test_Optimization(unittest.TestCase):
         self.setFunction(f)
         self.setGuess(array([10, 31]))
         s = Solver(self.problem)
-        result = s.newton(mode = 'default', maxIteration = 1000)
+        result = s.newton(mode = 'default', maxIteration = 100)
         expected = array([a, a**2])
         self.assertAlmostEqual(0, norm(result-expected))
  
@@ -68,7 +57,7 @@ class Test_Optimization(unittest.TestCase):
     def test_newton_converge_fail(self):
         self.setGuess(array([699, 30300]))
         s = Solver(self.problem)
-        result = s.newton(mode = 'default', maxIteration = 100)
+        result = s.newton(mode = 'default', maxIteration = 50)
         expected = array([1., 1.])
         close = np.isclose(result, expected) #Check that the result is 'Not almost equal' the expected value
         self.assertFalse(close[0])
@@ -84,8 +73,10 @@ class Test_Optimization(unittest.TestCase):
     def test_chebyquad_4(self):
         guess = array([0.25, 0.5, 0.2, 0.9])
         self.setUp(chebyquad, guess, gradchebyquad)
-        s = Solver(self.problem)
-        result = s.newton(mode = 'default', maxIteration = 400)  #HERE WE SHPULD HAVE OTHER MODE OR TEST BFGS, REGULAR DOES NOT WORK
+        
+        s = BadBroydenSolver(self.problem)
+        
+        result = s.newton(mode = 'inexact', maxIteration = 1000)  #HERE WE SHPULD HAVE OTHER MODE OR TEST BFGS, REGULAR DOES NOT WORK
         x = linspace(0,1, 4)
        
         xmin = fmin_bfgs(chebyquad,x,gradchebyquad)  

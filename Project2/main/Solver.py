@@ -59,10 +59,6 @@ class Solver:
       
         plt.show()
     
-    
-
-
-
     def newton(self, mode='default', tol = 1e-8, maxIteration = 1000):
         iterations = 0
         x_k = self.problem.x_0
