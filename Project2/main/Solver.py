@@ -180,7 +180,7 @@ class QuasiNewtonSolver(Solver):
         
     def _inexact_line_search(self, x_k, s_k, mode, a_l=0, a_u=1e5,
                              rho=0.1, sigma=0.7, tau=0.1, chi=9):
-        a_0 = (a_u - a_l)/2
+        a_0 = 1
         d_a = self.delta_grad
         f_alpha = lambda alpha: self.function(x_k + alpha*s_k)
         f_prime = lambda alpha: (self.function(x_k + (alpha+d_a)*s_k)
@@ -296,19 +296,19 @@ if __name__ == '__main__':
     #zero = s.newton(mode = 'default')
     #print(zero)
     
-    GoodBoy = GoodBroydenSolver(op)
+    #GoodBoy = GoodBroydenSolver(op)
     #BadBoy = BadBroydenSolver(op)
     #DP2 = DFP2Solver(op)
-    #BFGS = BFGS2Solver(op)
+    BFGS = BFGS2Solver(op)
     #zero1 = s.newton(mode='exact')
-    zero2 = GoodBoy.newton()
+    #zero2 = GoodBoy.newton()
     #zero3 = BadBoy.newton()
     #zero4 = DP2.newton()
-    #zero5 = BFGS.newton()
+    zero5 = BFGS.newton()
     
     #print('Regular newton gives: ',zero1, '\n')
-    print('Good Broyden gives: ',zero2, '\n')
+    #print('Good Broyden gives: ',zero2, '\n')
     #print('Bad Broyden gives: ',zero3, '\n')
     #print('DFP2 gives: ',zero4, '\n')    
-    #print('BFGS2 gives: ',zero5, '\n')
+    print('BFGS2 gives: ',zero5, '\n')
     
