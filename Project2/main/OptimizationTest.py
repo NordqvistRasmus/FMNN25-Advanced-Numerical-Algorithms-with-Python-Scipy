@@ -76,7 +76,7 @@ class Test_Optimization(unittest.TestCase):
         
         s = BadBroydenSolver(self.problem)
         
-        result = s.newton(mode = 'inexact', maxIteration = 1000)  #HERE WE SHPULD HAVE OTHER MODE OR TEST BFGS, REGULAR DOES NOT WORK
+        result = s.newton(mode = 'inexact', maxIteration = 1000)  
         x = linspace(0,1, 4)
        
         xmin = fmin_bfgs(chebyquad,x,gradchebyquad)  
