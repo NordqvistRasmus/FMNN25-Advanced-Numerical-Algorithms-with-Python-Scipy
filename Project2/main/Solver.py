@@ -281,7 +281,8 @@ class BFGS2Solver(QuasiNewtonSolver):
         u1 = gamma@hg
         a1 = a2 = a3 = 1/dg
         u2 = outer(delta,delta)
-        u3 = outer(dg, self.inverse_hessian) + outer(dg, self.inverse_hessian).T #Transponat för motsat ordning 
+        u3 = outer(delta, gamma)@self.inverse_hessian + self.inverse_hessian@outer(gamma, delta)
+        #u3 = outer(dg, self.inverse_hessian) + outer(dg, self.inverse_hessian).T #Transponat för motsat ordning 
         self.inverse_hessian = self.inverse_hessian+(1+a1*u1)*(a2*u2)-a3*u3
     
     
