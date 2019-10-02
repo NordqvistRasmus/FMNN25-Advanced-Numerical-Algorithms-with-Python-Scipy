@@ -3,7 +3,7 @@
 """
 Created on Thu Sep 26 17:55:09 2019
 
-@author: johanliljegren
+@author: Mattias Lundström, Pontus Nordqvist, Johan Liljegren, Arvid Rolander, Antonio Alas
 """
 from  pylab import array
 import numpy as np

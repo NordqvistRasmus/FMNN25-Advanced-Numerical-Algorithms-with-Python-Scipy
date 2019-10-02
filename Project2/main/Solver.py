@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Sep 25 21:12:56 2019
-@author: Mattias Lundström, Pontus Nordqvist, Johan Liljegren, Arvid Rolaner
+@author: Mattias Lundström, Pontus Nordqvist, Johan Liljegren, Arvid Rolander, Antonio Alas
 """
 from  scipy import *
 from scipy.linalg import inv
@@ -14,10 +14,28 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 from matplotlib.colors import LogNorm
 import matplotlib.pyplot as plt
-import numpy as np
+
     
 class Solver:
+    """
+    Solver class which solves the problem.
     
+    ...
+    
+    Attributes
+    ----------
+        problem: A problem which is defined by a problem class.
+        function: The objective function defined by the problem.
+        n: The dimension of the guess if it is given as a column vector.
+        delta_grad: The small increment for calculating the finite difference
+                    approximation for the gradient. Defaults to 1e-8.
+        delta_values_grad: A diagonal matrix with the dimmension nxn whose 
+                           elements are the delta_grad.
+        delta_hess: The small increment for calculating the finite difference
+                    approximation for the hessian. Defaults to 1e-4.
+        delta_mat_hess: A diagonal matrix with the dimmension nxn whose 
+                        elements are the delta_hess.
+    """
     def __init__(self, problem):
         self.problem = problem
         self.function = problem.objective_function
@@ -28,16 +46,13 @@ class Solver:
         self.delta_mat_hess = diag([self.delta_hess for i in range(self.n)])
         
     
-    def __call__(self):
-        pass
-    
     #Plotting code partly from 'Three-Dimensional Plotting in Matplotlib' - Jake VanderPlas
     def plot(self, function, type = 'surface'): 
         
         if (type == 'surface'):
-            x = np.linspace(-2,2,250)
-            y = np.linspace(-1,3,250)
-            X, Y = np.meshgrid(x, y)
+            x = linspace(-2,2,250)
+            y = linspace(-1,3,250)
+            X, Y = meshgrid(x, y)
             Z = rosen([X, Y])
             ax = plt.axes(projection='3d')
             ax.plot_surface(X,Y,Z, norm = LogNorm(), rstride = 5, cstride = 5, cmap = 'RdGy_r', alpha = .9, edgecolor = 'none')
@@ -48,9 +63,9 @@ class Solver:
 
         if (type == 'contour'):
             ax = plt.axes()
-            x = np.linspace(-5,5,500)
-            y = np.linspace(-5,5,500)
-            X, Y = np.meshgrid(x, y)
+            x = linspace(-5,5,500)
+            y = linspace(-5,5,500)
+            X, Y = meshgrid(x, y)
             Z = rosen([X, Y])
             plt.contour(X, Y, Z, 150, cmap = 'RdGy');
             ax.set_title('Rosenbrock function - Contour plot')
@@ -293,22 +308,22 @@ if __name__ == '__main__':
     s = Solver(op)
     s.plot(rosen, 'surface')
     #s.plot(rosen, 'contour')
-    #zero = s.newton(mode = 'default')
-    #print(zero)
     
     #GoodBoy = GoodBroydenSolver(op)
     #BadBoy = BadBroydenSolver(op)
     #DP2 = DFP2Solver(op)
-    BFGS = BFGS2Solver(op)
-    #zero1 = s.newton(mode='exact')
+    #BFGS = BFGS2Solver(op)
+    zero = s.newton(mode = 'default')
+    zero1 = s.newton(mode='exact')
     #zero2 = GoodBoy.newton()
     #zero3 = BadBoy.newton()
     #zero4 = DP2.newton()
-    zero5 = BFGS.newton()
+    #zero5 = BFGS.newton()
     
-    #print('Regular newton gives: ',zero1, '\n')
+    print('Regular newton gives: ',zero, '\n')
+    print('Newton with exact line search gives: ',zero1, '\n')
     #print('Good Broyden gives: ',zero2, '\n')
     #print('Bad Broyden gives: ',zero3, '\n')
     #print('DFP2 gives: ',zero4, '\n')    
-    print('BFGS2 gives: ',zero5, '\n')
+    #print('BFGS2 gives: ',zero5, '\n')
     
