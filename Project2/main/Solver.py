@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
     
 class Solver:
     """
-    Solver class which solves the problem.
+    Solver class which solves the Optimization problem.
     
     ...
     
@@ -132,13 +132,14 @@ class Solver:
         elif mode == 'inexact':
             alpha = self.inexact_line_search(x_k) #Obatin alpha by inexact line search
         
-        x_next = solve(hessian, hessian@x_k - alpha*gradient)
+        x_next = solve(hessian, hessian@x_k - alpha*gradient) #Solve the equation system Ax=b
         
         return x_next
     
     def _gradient(self, x_k):
         """
-        Added because we need to opt have gradient //M
+        Help method which calculates the gradient at x_k. 
+        If gradient is provided in problem, it returns the gradient value. 
         """
         if self.problem.gradient is None:
             gradient = array([(self.function(x_k + norm(x_k)*self.delta_values_grad[:,i])
@@ -147,17 +148,18 @@ class Solver:
                             for i in range(self.n)])
             return gradient
         else:
-            return self.problem.gradient(x_k) #If we have gradient from problem (as a function)
+            return self.problem.gradient(x_k) #If we have gradient (function) from problem 
         """
         Debug print
         """
         #print(norm(gradient))
         #return gradient
     
-    def _search_dir(self, x_k):
-        pass    
-    
+        
     def exact_line_search(self, x_k, gradient, hessian, tol=1e-6, alpha_0=1):
+        """
+        Help method for the exact line search algorithm. Calculates and returns the next alpha. 
+        """
         
         delta_grad = self.delta_grad
         delta_hess = self.delta_hess
@@ -183,6 +185,9 @@ class Solver:
         return alpha_next
     
     def _hessian(self, x_k):
+        """
+        Help method for calculating the hessian at value x_k
+        """
         hessian = array([[self._second_part_div(x_k, i, j) for j in range(self.n)]
                           for i in range(self.n)])
         hessian = 0.5*(hessian+hessian.T)
@@ -190,29 +195,37 @@ class Solver:
         return hessian
         
     def _second_part_div(self, x_k, i, j):
+        """
+        Help method for hessian method for calculating the second partial derivate
+        """
         div = (self.function(x_k+self.delta_mat_hess[:,i] + self.delta_mat_hess[:,j]) -  
                self.function(x_k+self.delta_mat_hess[:,i])-
                self.function(x_k+self.delta_mat_hess[:,j])+
                self.function(x_k))/self.delta_hess**2            # consider changing delta to something bigger
         return div
         
+   
     
-# här använder jag mig av en faktor delta som är = alpha * s, där s ska vara s = -hessian(x_k) @ g(x_k)
-# Vet inte om detta skall deklareras någonstans i newton_step-metoden som ett attribut eller
-# om vi ska ha det som parametrar i varje _hessian skuggning. Lämnar detta öpper för er att bestämma
-# mitt förslag är att vi lägger till det som parametrar.
-# I övrigt är alla metoder implementerade.
+    
         
 class QuasiNewtonSolver(Solver):
-    
+    """
+    Subclass to Solver. Used to solve Optimization problem using Quasi-Newton algorithms. 
+    Overwrite method __init__ and _newton_step.
+    """
     
     def __init__(self, problem):
         super().__init__(problem)
         self.hessian = super()._hessian(problem.x_0)
         self.inverse_hessian = inv(super()._hessian(problem.x_0))
         
+        
     def _inexact_line_search(self, x_k, s_k, mode, a_l=0, a_u=1e5,
                              rho=0.1, sigma=0.7, tau=0.1, chi=9):
+        """
+        Performs inexact line search algorithm for given problem. 
+        """
+        
         a_0 = (a_u-a_l)/2
         d_a = self.delta_grad
         f_alpha = lambda alpha: self.function(x_k + alpha*s_k)
@@ -257,11 +270,17 @@ class QuasiNewtonSolver(Solver):
             
         return a_0, f_a0
                 
-    
+        
     def _update_hessian(self, x_k, x_next, alpha):
+        """
+        Abstract method. Overwritten in subclasses. 
+        """
         pass
      
     def _newton_step(self, x_k, mode):
+        """
+        Performs the newton step using inexact line search. 
+        """
         s_k = (-1)*self.inverse_hessian@self._gradient(x_k)
         s_k = s_k/norm(s_k)
         alpha, f_alpha = self._inexact_line_search(x_k, s_k, 'wolfe')
@@ -272,13 +291,15 @@ class QuasiNewtonSolver(Solver):
     
 class GoodBroydenSolver(QuasiNewtonSolver):
     
-    
     def _update_hessian(self, x_k, alpha):
+        """
+        Updates the inverse_hessian using Good Broyden
+        """
         delta = alpha*(self.inverse_hessian@self._gradient(x_k)) #osäker på denna
         #delta = x_next-x_k
-        print('x_k: ', x_k, 'alpha: ', alpha)
+        #print('x_k: ', x_k, 'alpha: ', alpha)
         gamma = self._gradient(x_k) - self._gradient(x_k - delta)
-        print('gammahamma',gamma)
+        #print('gammahamma',gamma)
         u = delta - self.inverse_hessian@gamma
         a = 1 /u@gamma
         self.inverse_hessian = self.inverse_hessian + a*outer(u, u)
@@ -286,7 +307,11 @@ class GoodBroydenSolver(QuasiNewtonSolver):
 #Allmänt osäker på denna bad Broyden-metoden, svårt att hitta info.       
 class BadBroydenSolver(QuasiNewtonSolver):
     
+    
     def _update_hessian(self, x_k, alpha):
+        """
+        Updates the inverse_hessian using Bad Broyden
+        """
         delta =  alpha*(self.inverse_hessian@self._gradient(x_k))
         gamma = self._gradient(x_k) - self._gradient(x_k-delta)
         u = gamma - self.inverse_hessian@delta 
@@ -296,6 +321,9 @@ class BadBroydenSolver(QuasiNewtonSolver):
 class DFP2Solver(QuasiNewtonSolver):
     
     def _update_hessian(self, x_k, alpha):
+        """
+        Updates the inverse_hessian using DFP2
+        """
         delta =  alpha*(self.inverse_hessian@self._gradient(x_k))
         gamma = self._gradient(x_k) - self._gradient(x_k-delta)
         u1 = outer(delta,delta)
@@ -307,6 +335,9 @@ class DFP2Solver(QuasiNewtonSolver):
 class BFGS2Solver(QuasiNewtonSolver):
     
     def _update_hessian(self, x_k, alpha):
+        """
+        Updates the inverse_hessian using BFGS2
+        """
         delta =  alpha*(self.inverse_hessian@self._gradient(x_k))
         gamma = self._gradient(x_k) - self._gradient(x_k-delta)
         hg = self.inverse_hessian@gamma
@@ -320,6 +351,19 @@ class BFGS2Solver(QuasiNewtonSolver):
     
     
 if __name__ == '__main__':
+    
+    #Rosenbrock function using regular newton. 
+    op = OptimizationProblem(rosen, array([320,-30]))
+    s = Solver(op)
+    s.plot(rosen, 'surface')
+    rosenZeroDefault = s.newton(mode = 'exact')
+    rosenZeroExact = s.newton(mode = 'exact')
+
+    print('Solution to the Optimization problem using regular Newton is:', rosenZeroDefault)
+    print('Solution to the Optimization problem using Exact Line Serach is:', rosenZeroExact)
+
+    
+    """
     function = lambda x: (x[0]-50)**2 + (x[1]-73)**2
     #function = lambda x: 100*((x[1]-x[0]**2)**2)+(1-x[0])**2
     op = OptimizationProblem(function, array([5,80]))
@@ -344,4 +388,4 @@ if __name__ == '__main__':
     print('Bad Broyden gives: ',zero3, '\n')
     print('DFP2 gives: ',zero4, '\n')    
     print('BFGS2 gives: ',zero5, '\n')
-    
+    """
