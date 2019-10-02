@@ -37,6 +37,9 @@ class Solver:
                         elements are the delta_hess.
     """
     def __init__(self, problem):
+        """
+        Initializes the solver prom a given problem.
+        """
         self.problem = problem
         self.function = problem.objective_function
         self.n = problem.x_0.shape[0]
@@ -46,16 +49,20 @@ class Solver:
         self.delta_mat_hess = diag([self.delta_hess for i in range(self.n)])
         
     
-    #Plotting code partly from 'Three-Dimensional Plotting in Matplotlib' - Jake VanderPlas
     def plot(self, function, type = 'surface'): 
-        
+        """
+        Plots a given function. Type defines what kind of class of plots to plot,
+        the alternatives are; surface plot or a contour plot, it defaults to a
+        surface plot. 
+        """
         if (type == 'surface'):
-            x = linspace(-2,2,250)
-            y = linspace(-1,3,250)
+            x = linspace(-2,2,250) #Defines plot intervall for x direction.
+            y = linspace(-1,3,250) #Defines plot intervall for y direction.
             X, Y = meshgrid(x, y)
-            Z = rosen([X, Y])
+            Z = rosen([X, Y]) #Defines plot intervall for z direction.
             ax = plt.axes(projection='3d')
-            ax.plot_surface(X,Y,Z, norm = LogNorm(), rstride = 5, cstride = 5, cmap = 'RdGy_r', alpha = .9, edgecolor = 'none')
+            ax.plot_surface(X,Y,Z, norm = LogNorm(), rstride = 5, cstride = 5, cmap = 'RdGy_r',
+                            alpha = .9, edgecolor = 'none')
             ax.set_title('Rosenbrock function - Surface plot')
             ax.set_xlabel('x_1')
             ax.set_ylabel('x_2')
@@ -63,8 +70,8 @@ class Solver:
 
         if (type == 'contour'):
             ax = plt.axes()
-            x = linspace(-5,5,500)
-            y = linspace(-5,5,500)
+            x = linspace(-5,5,500) #Defines plot intervall for x direction.
+            y = linspace(-5,5,500) #Defines plot intervall for y direction.
             X, Y = meshgrid(x, y)
             Z = rosen([X, Y])
             plt.contour(X, Y, Z, 150, cmap = 'RdGy');
@@ -75,28 +82,39 @@ class Solver:
         plt.show()
     
     def newton(self, mode='default', tol = 1e-8, maxIteration = 1000):
+        """
+        A general newton method, can be set to do a regular newton method (alpha=1),
+        one with exact line search or one with an inexact line search.
+        Parameters
+        ----------
+            mode: What newton method to use, default to regular newton.
+            tol: Tolerance for the newton iteration to stop using the difference
+                 of two sequncial steps. Defults to 1e-8.
+            maxIteration: Defines the maximal ammount of iterations for the newton
+                          iteration. Defaults to 1000.
+        """
         iterations = 0
         x_k = self.problem.x_0
         x_next = self._newton_step(x_k, mode)
         
-        while(norm(x_k-x_next)>tol
-              and norm(self._gradient(x_k)) > tol
-              and iterations < maxIteration):
+        while(norm(x_k-x_next)>tol #Checks tol
+              and norm(self._gradient(x_k)) > tol #To stop the gradient to get to small
+              and iterations < maxIteration): #Checks how many iterations
             x_k = x_next
             x_next = self._newton_step(x_k, mode)
             iterations +=1
-        if norm(x_k-x_next) > tol:
-            #Might lead to wrong answer?
-            pass
         if maxIteration == iterations:
             print('Mode:', mode, "------ Did not converge in" ,iterations, "iterations. \n")
             return x_next
             
         print('Mode:', mode, "------ Converged in" ,iterations, "iterations. \n")
-        #print('Norm of gradient:', norm(self._gradient(x_k)))
         return x_next
     
     def _newton_step(self, x_k, mode):
+        """
+        Help method which conducts the newton step for one iteration. Is dependant
+        on the newton mode. If no gradient is gives, it computes one
+        """
         
         if self.problem.gradient is not None:
             gradient = self.problem.gradient(x_k)
@@ -109,10 +127,10 @@ class Solver:
             alpha = 1
         
         elif mode == 'exact':
-            alpha = self.exact_line_search(x_k, gradient, hessian)
+            alpha = self.exact_line_search(x_k, gradient, hessian) #Obatin alpha by exact line search
             
         elif mode == 'inexact':
-            alpha = self.inexact_line_search(x_k)
+            alpha = self.inexact_line_search(x_k) #Obatin alpha by inexact line search
         
         x_next = solve(hessian, hessian@x_k - alpha*gradient)
         
@@ -256,10 +274,10 @@ class GoodBroydenSolver(QuasiNewtonSolver):
     
     
     def _update_hessian(self, x_k, alpha):
-        delta =  alpha*(self.inverse_hessian@self._gradient(x_k)) #osäker på denna
+        delta = alpha*(self.inverse_hessian@self._gradient(x_k)) #osäker på denna
         #delta = x_next-x_k
-        print('x_next: ', x_next,'x_k: ', x_k, 'alpha: ', alpha)
-        gamma = self._gradient(x_next) - self._gradient(x_k)
+        print('x_k: ', x_k, 'alpha: ', alpha)
+        gamma = self._gradient(x_k) - self._gradient(x_k - delta)
         print('gammahamma',gamma)
         u = delta - self.inverse_hessian@gamma
         a = 1 /u@gamma
@@ -302,28 +320,28 @@ class BFGS2Solver(QuasiNewtonSolver):
     
     
 if __name__ == '__main__':
-    #function = lambda x: (x[0]-1)**2 + x[1]**2
-    function = lambda x: 100*((x[1]-x[0]**2)**2)+(1-x[0])**2
-    op = OptimizationProblem(function, array([5,5]))
+    function = lambda x: (x[0]-50)**2 + (x[1]-73)**2
+    #function = lambda x: 100*((x[1]-x[0]**2)**2)+(1-x[0])**2
+    op = OptimizationProblem(function, array([5,80]))
     s = Solver(op)
     s.plot(rosen, 'surface')
     #s.plot(rosen, 'contour')
     
-    #GoodBoy = GoodBroydenSolver(op)
-    #BadBoy = BadBroydenSolver(op)
-    #DP2 = DFP2Solver(op)
-    #BFGS = BFGS2Solver(op)
+    GoodBoy = GoodBroydenSolver(op)
+    BadBoy = BadBroydenSolver(op)
+    DP2 = DFP2Solver(op)
+    BFGS = BFGS2Solver(op)
     zero = s.newton(mode = 'default')
     zero1 = s.newton(mode='exact')
-    #zero2 = GoodBoy.newton()
-    #zero3 = BadBoy.newton()
-    #zero4 = DP2.newton()
-    #zero5 = BFGS.newton()
+    zero2 = GoodBoy.newton()
+    zero3 = BadBoy.newton()
+    zero4 = DP2.newton()
+    zero5 = BFGS.newton()
     
     print('Regular newton gives: ',zero, '\n')
     print('Newton with exact line search gives: ',zero1, '\n')
-    #print('Good Broyden gives: ',zero2, '\n')
-    #print('Bad Broyden gives: ',zero3, '\n')
-    #print('DFP2 gives: ',zero4, '\n')    
-    #print('BFGS2 gives: ',zero5, '\n')
+    print('Good Broyden gives: ',zero2, '\n')
+    print('Bad Broyden gives: ',zero3, '\n')
+    print('DFP2 gives: ',zero4, '\n')    
+    print('BFGS2 gives: ',zero5, '\n')
     
