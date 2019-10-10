@@ -11,11 +11,10 @@ import seaborn as sns; sns.set()
 
 class Problem:
     
-    def  __init__(self, dx, room1 = [1,1], room2 = [1,2], room3 = [1,1]):
-        wall = 15
-        heater = 40
-        window = 5
-        
+    def  __init__(self, dx, wall = 15, heater = 40, window = 5):
+        room1 = [1,1]
+        room2 = [1,2]
+        room3 = [1,1]
         self.geometry = {'room1': room1, 'room2': room2, 'room3': room3}
         self.boundary = {'room1': [wall, wall, wall, heater],
                          'room2': [heater, wall, window, wall],
