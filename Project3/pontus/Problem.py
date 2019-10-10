@@ -9,32 +9,33 @@ from  pylab import *
 
 class Problem:
     
-   def  __init__(self, dx, room1 = [1,1], room2 = [1,2], room3 = [1,1]):
+    def  __init__(self, dx, room1 = [1,1], room2 = [1,2], room3 = [1,1]):
         wall = 15
-        heat = 40
-        wind = 5
+        heater = 40
+        window = 5
         
         self.geometry = {'room1': room1, 'room2': room2, 'room3': room3}
-        self.boundary = {'room1': [wall, interface, wall, heater],
-                         'room2': [heater, ]}
+        self.boundary = {'room1': [wall, wall, wall, heater],
+                         'room2': [heater, wall, window, wall],
+                         'room3': [wall, heater, wall, wall]}
         
         for r in self.geometry.keys():
-            self.geometry[r]= self.init_room(dx, self.geometry[r])
-        
-   def init_room(self, dx, dimensions, north = 15, east = 15, south = 15, west = 15):
+            self.geometry[r]= self.init_room(dx, self.geometry[r], self.boundary[r])
+    
+    def init_room(self, dx, dimensions, bound = [15,15,15,15]):
         x = arange(0, dimensions[0],dx) 
         y = arange(0, dimensions[1],dx)
         room = zeros((len(x), len(y)))
         for i in range(room.shape[1]):
-            room[0,i] = north
+            room[0,i] = bound[0]
         for i in range(room.shape[0]):
-            room[i,-1] = east
+            room[i,-1] = bound[1]
         for i in range(room.shape[1]):
-            room[-1,i] = south
+            room[-1,i] = bound[2]
         for i in range(room.shape[0]):
-            room[i,0] = west
+            room[i,0] = bound[3]
              
-        return room
+        return room 
         
 if __name__ == '__main__':
     p = Problem(0.1)
@@ -43,4 +44,5 @@ if __name__ == '__main__':
     print('room3',p.geometry['room3'])
     #for i in p.geometry:
     #    print(p.ge)
+
         
