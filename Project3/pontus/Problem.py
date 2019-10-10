@@ -40,19 +40,17 @@ class Problem:
     
     def plot(self):
         fig, ax = plt.subplots()
-        #plt.imshow(self.geometry['room1'], cmap='hot', interpolation='nearest')
+
         upper_left = zeros((self.geometry['room1'].shape[0],self.geometry['room1'].shape[1]))
         lower_right = zeros((self.geometry['room3'].shape[0],self.geometry['room3'].shape[1]))
-        upper_left[2][2] = None
-        print(self.geometry['room2'])
+        upper_left.fill(None)
+        lower_right.fill(None)
+
         splitted_room2 = vsplit(array(self.geometry['room2']), 2)
-        print('x', self.geometry['room2'].shape[0],'y', self.geometry['room2'].shape[1])
-        #print(self.geometry['room2'])
-        print(splitted_room2[0])
-        print(splitted_room2[1])
         total = block([[upper_left, splitted_room2[0], self.geometry['room3']],
                        [self.geometry['room1'], splitted_room2[1], lower_right]])
-        ax = sns.heatmap(total)
+        
+        ax = sns.heatmap(total, cmap = "YlOrRd")
         plt.show()
         
 if __name__ == '__main__':
