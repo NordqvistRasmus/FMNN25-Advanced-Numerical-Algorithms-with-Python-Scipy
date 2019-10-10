@@ -23,8 +23,8 @@ class Problem:
             self.geometry[r]= self.init_room(dx, self.geometry[r], self.boundary[r])
     
     def init_room(self, dx, dimensions, bound = [15,15,15,15]):
-        x = arange(0, dimensions[0],dx) 
-        y = arange(0, dimensions[1],dx)
+        x = arange(0, dimensions[1],dx) 
+        y = arange(0, dimensions[0],dx)
         room = zeros((len(x), len(y)))
         for i in range(room.shape[1]):
             room[0,i] = bound[0]
