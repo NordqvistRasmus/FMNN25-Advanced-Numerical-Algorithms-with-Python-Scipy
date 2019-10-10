@@ -6,6 +6,8 @@ Created on Thu Oct 10 10:35:23 2019
 from  scipy import *
 from  pylab import *
 
+import matplotlib.pyplot as plt
+import seaborn as sns; sns.set()
 
 class Problem:
     
@@ -36,12 +38,30 @@ class Problem:
             room[i,0] = bound[3]
              
         return room 
+    
+    def plot(self):
+        fig, ax = plt.subplots()
+        #plt.imshow(self.geometry['room1'], cmap='hot', interpolation='nearest')
+        upper_left = zeros((self.geometry['room1'].shape[0],self.geometry['room1'].shape[1]))
+        lower_right = zeros((self.geometry['room3'].shape[0],self.geometry['room3'].shape[1]))
+        upper_left[2][2] = None
+        print(self.geometry['room2'])
+        splitted_room2 = vsplit(array(self.geometry['room2']), 2)
+        print('x', self.geometry['room2'].shape[0],'y', self.geometry['room2'].shape[1])
+        #print(self.geometry['room2'])
+        print(splitted_room2[0])
+        print(splitted_room2[1])
+        total = block([[upper_left, splitted_room2[0], self.geometry['room3']],
+                       [self.geometry['room1'], splitted_room2[1], lower_right]])
+        ax = sns.heatmap(total)
+        plt.show()
         
 if __name__ == '__main__':
     p = Problem(0.1)
-    print('room1',p.geometry['room1'])
-    print('room2',p.geometry['room2'])
-    print('room3',p.geometry['room3'])
+    p.plot()
+    #print('room1',p.geometry['room1'])
+    #print('room2',p.geometry['room2'])
+    #print('room3',p.geometry['room3'])
     #for i in p.geometry:
     #    print(p.ge)
 
