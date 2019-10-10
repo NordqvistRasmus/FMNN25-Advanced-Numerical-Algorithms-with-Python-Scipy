@@ -4,5 +4,9 @@
 Created on Wed Oct  9 20:16:48 2019
 @author: Mattias Lundström1
 """
-from  scipy import *
-from  pylab import *
+from mpi4py import MPI
+
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+nprocessors = comm.Get_size()
+print ("helloworld from process", rank)
