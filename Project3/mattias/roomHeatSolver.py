@@ -55,10 +55,9 @@ class roomHeatSolver:
             u_i = u_matrix[:,0] #get first row, since interface1
             u_i = u_i[n:] #slice array, get only elements along interface
             derivates = (self.interface_1 - u_i) / self.dx
-            print(u_matrix)
-            print(u_i)
-            #print(derivates)
-        pass
+            return(derivates)
+        ###
+        #mooooore
 
             
             
