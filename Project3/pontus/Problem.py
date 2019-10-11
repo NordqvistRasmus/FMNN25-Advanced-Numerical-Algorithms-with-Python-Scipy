@@ -12,6 +12,10 @@ import seaborn as sns; sns.set()
 class Problem:
     
     def  __init__(self, dx, wall = 15, heater = 40, window = 5):
+        self.dx = dx
+        self.wall = wall
+        self.heater = heater
+        self.window = window
         room1 = [1,1]
         room2 = [1,2]
         room3 = [1,1]

@@ -3,7 +3,7 @@
 Created on Wed Oct  9 20:16:48 2019
 @author: Mattias Lundström1
 """
-from mpi4py import MPI
+#from mpi4py import MPI
 from numpy import diag, ones, zeros, array
 import numpy as np
 from scipy.linalg import block_diag, solve
@@ -11,7 +11,7 @@ from scipy.linalg import block_diag, solve
 
 
 
-dx = 1/3
+dx = 1/10
 n = int(1/dx)
 BC_normal = 15
 BC_heater = 40
@@ -48,3 +48,4 @@ b = b/(dx**2)
 u = solve(A, b)
 print(A)
 #print(u.reshape(2*n-1, n-1)) #For 2x1 room inner points
+print(u)

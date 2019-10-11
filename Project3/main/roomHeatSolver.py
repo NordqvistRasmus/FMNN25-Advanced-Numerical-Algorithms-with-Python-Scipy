@@ -12,11 +12,11 @@ class roomHeatSolver:
     
     def __init__(self, problem):
         self.problem = problem
-        self.dx = dx
-        self.BC_normal = problem.wall
-        self.BC_heater = problem.heater
-        self.BC_window = problem.window
-        self.n = int(1/dx)
+        self.dx = problem.dx
+        self.wall = problem.wall
+        self.heater = problem.heater
+        self.window = problem.window
+        self.n = int(1/self.dx)
     
     def solveRoom(self):
         pass
