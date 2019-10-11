@@ -51,6 +51,7 @@ class Problem:
                        [self.geometry['room1'], splitted_room2[1], lower_right]])
         
         ax = sns.heatmap(total, cmap = "YlOrRd")
+        ax.invert_yaxis()
         plt.show()
         
 if __name__ == '__main__':
