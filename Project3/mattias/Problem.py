@@ -15,6 +15,10 @@ class Problem:
         room1 = [1,1]
         room2 = [1,2]
         room3 = [1,1]
+        self.dx = dx
+        self.wall = wall
+        self.heater = heater 
+        self.window = window
         self.geometry = {'room1': room1, 'room2': room2, 'room3': room3}
         self.boundary = {'room1': [wall, wall, wall, heater],
                          'room2': [heater, wall, window, wall],

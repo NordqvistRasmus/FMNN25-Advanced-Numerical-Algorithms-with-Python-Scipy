@@ -11,7 +11,7 @@ from scipy.linalg import block_diag, solve
 
 
 
-dx = 1/6
+dx = 1/3
 n = int(1/dx)
 BC_normal = 15
 BC_heater = 40
@@ -43,8 +43,8 @@ for i in range(N-1, int(np.ceil(N/2)), -(n-1)): #Sets interface also to BC_norma
 
 # Collect dirichlet boundry conditions in b, then solve Au = b
 b = - BC_N - BC_S - BC_W - BC_E
-A = A/(dx**2) 
+#A = A/(dx**2) 
 b = b/(dx**2)
 u = solve(A, b)
-#print()
-print(u.reshape(2*n-1, n-1)) #For 2x1 room inner points
+print(A)
+#print(u.reshape(2*n-1, n-1)) #For 2x1 room inner points
