@@ -15,13 +15,41 @@ class roomHeatSolver:
         self.problem = problem
         self.dx = problem.dx
         self.BC_normal = problem.wall
-        self.BC_heater = problem.BC_heater
+        self.BC_heater = problem.heater
         self.BC_window = problem.window
         self.n = int(1/self.dx)
         ####
         self.solveLargeRoom(self.n)
+        self.u = 0 #Old room 
+        self.interface_1 = 20
+        self.interface_2 = 20
 
-    def solveLargeRoom(self, n):
+
+    def getBoundaries(self, room):
+        if self.u == 0:
+            print("Room not setup")
+
+        if room == "room1": # We want boundaries for room 1 -> solve room 2 and return the derivates
+            return self.interface_1
+        elif room == "room2":
+            return (self.interface_1, self.interface_2)
+        elif room == "room3":
+            return self.interface_2
+            #Calculate derivates at boundary 
+        else:
+            #raise exception
+            print("Room not defined")
+            return None
+
+    def updateBoundaries(self,, interface = interface1)
+        n = self.n
+        if interface
+
+
+
+    def solveLargeRoom(self, interface_E, interface_W):
+        n = self.n
+
         A1 = diag(-4*ones(n-1)) + diag(ones(n-2), 1) + diag(ones(n-2), -1) 
         A = block_diag(A1, A1) #First block
         for i in range(2,2*n-1): # All other building blocks (to 2n-1 for 2x1 block)
@@ -44,14 +72,18 @@ class roomHeatSolver:
 
         # Collect dirichlet boundry conditions in b, then solve Au = b
         b = - BC_N - BC_S - BC_W - BC_E
-        A = A/(dx**2) 
-        b = b/(dx**2)
-        u = solve(A, b)
-        print(u)
+        A = A/(self.dx**2) 
+        b = b/(self.dx**2)
+        self.u = solve(A, b)
+        print(self.u.reshape(2*n-1, n-1))
+        return self.u
+
+
+    
 
 
 p = Problem(0.2)
-roomHeatSolver(p)
+solver = roomHeatSolver(p)
 
 
 
