@@ -5,8 +5,11 @@ Created on Fri Oct 11 15:09:42 2019
 
 @author: johanliljegren
 """
-from  scipy import *
-from  pylab import *
+from mpi4py import MPI
+from numpy import diag, ones, zeros, array
+import numpy as np
+from scipy.linalg import block_diag, solve
+from Problem import Problem
 
 class roomHeatSolver:
     

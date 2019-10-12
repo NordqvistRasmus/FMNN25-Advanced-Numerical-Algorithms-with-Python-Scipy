@@ -3,8 +3,8 @@
 Created on Thu Oct 10 10:35:23 2019
 @author: pontusnordqvist
 """
-from  scipy import *
-from  pylab import *
+#from scipy import 
+from pylab import shape, arange, zeros, array, vsplit, block
 
 import matplotlib.pyplot as plt
 import seaborn as sns; sns.set()
