@@ -79,6 +79,13 @@ class smallRoomHeatSolver:
     def solve_system(self, interface_vals):
         self._update_boundaries(interface_vals)
         u = lu_solve((self.lu, self.piv, self.BC))
+        mesh_vals = u.reshape(self.n_rows,self.n_cols)
+        if self.interface_dir == 'east':
+            interface_vals = mesh_vals[:,-1]
+        elif self.interface_dir == 'west':
+            interface_vals = mesh_vals[:,0]
+            
+        return u, interface_vals
         
         
     
