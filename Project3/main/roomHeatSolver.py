@@ -5,7 +5,7 @@ Created on Fri Oct 11 15:09:42 2019
 
 @author: johanliljegren
 """
-from mpi4py import MPI
+#from mpi4py import MPI
 from numpy import diag, ones, zeros, array
 import numpy as np
 from scipy.linalg import block_diag, solve

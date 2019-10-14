@@ -3,7 +3,7 @@
 Created on Wed Oct  9 20:16:48 2019
 @author: Mattias Lundström1
 """
-from mpi4py import MPI
+#from mpi4py import MPI
 from numpy import diag, ones, zeros, array
 import numpy as np
 from scipy.linalg import block_diag, solve
@@ -128,12 +128,16 @@ class largeRoomHeatSolver(roomHeatSolver):
         b = b/(self.dx**2)
         self.u = solve(A, b)
         return self.u
+    
+    def getMatrix(self):
+        return self.u.reshape(2*self.n-1,self.n-1)
 
-p = Problem(1/5)
+p = Problem(1/3)
 solver = largeRoomHeatSolver(p)
 solver.solveRoom()
 print(solver.getNeumannBC("interface2"))
 print(solver.getBound("interface1"))
+print(solver.getMatrix())
 
 #u.reshape(2*n-1, n-1)
 
