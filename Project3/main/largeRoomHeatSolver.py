@@ -59,11 +59,13 @@ class largeRoomHeatSolver(roomHeatSolver):
         else:
             raise ValueError("Can only update boundaries at interface1 or interface2.")
         
+    def getMatrix(self):
+        return self.u.reshape(2*self.n -1, self.n - 1)
 
     """
     Calculates the derivates along interface1 or interface2 and returns them as a vector. 
     """
-    def getNeumannBC(self, interface):
+    def getDerives(self, interface):
         n = self.n
         u = self.u
 
@@ -89,7 +91,7 @@ class largeRoomHeatSolver(roomHeatSolver):
 
     Returns u, the solved inner room temperaturesm as a vector which can be reshaped back into a room matrix.
     """
-    def solveRoom(self):
+    def solveLargeRoom(self):
         n = self.n
 
         A1 = diag(-4*ones(n-1)) + diag(ones(n-2), 1) + diag(ones(n-2), -1) 
@@ -127,20 +129,14 @@ class largeRoomHeatSolver(roomHeatSolver):
         b = b/(self.dx**2)
         self.u = solve(A, b)
         return self.u
-    
-    def getMatrix(self):
-        """
-        To do: Resamble matrix using BC
-        """
-        print(self.problem.geometry)
-        #return self.u.reshape(2*self.n-1,self.n-1)
 
-p = Problem(1/3)
-solver = largeRoomHeatSolver(p)
-solver.solveRoom()
-print(solver.getNeumannBC("interface2"))
-print(solver.getBound("interface1"))
-solver.getMatrix()
+if __name__ == '__main__':
+    p = Problem(1/3)
+    solver = largeRoomHeatSolver(p)
+    solver.solveLargeRoom()
+    print(solver.getDerives("interface2"))
+    print(solver.getBound("interface1"))
+    solver.getMatrix()
 
 #u.reshape(2*n-1, n-1)
 
