@@ -15,7 +15,6 @@ class largeRoomHeatSolver(roomHeatSolver):
     
     def __init__(self, problem):
         super().__init__(problem)
-
         """
         self.problem = problem
         self.dx = problem.dx
@@ -130,14 +129,18 @@ class largeRoomHeatSolver(roomHeatSolver):
         return self.u
     
     def getMatrix(self):
-        return self.u.reshape(2*self.n-1,self.n-1)
+        """
+        To do: Resamble matrix using BC
+        """
+        print(self.problem.geometry)
+        #return self.u.reshape(2*self.n-1,self.n-1)
 
 p = Problem(1/3)
 solver = largeRoomHeatSolver(p)
 solver.solveRoom()
 print(solver.getNeumannBC("interface2"))
 print(solver.getBound("interface1"))
-print(solver.getMatrix())
+solver.getMatrix()
 
 #u.reshape(2*n-1, n-1)
 

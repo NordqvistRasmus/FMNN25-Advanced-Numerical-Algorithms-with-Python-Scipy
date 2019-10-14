@@ -24,9 +24,9 @@ class Problem:
                          'room2': [heater, wall, window, wall],
                          'room3': [wall, heater, wall, wall]}
         
-        for r in self.geometry.keys():
-            self.geometry[r]= self.init_room(dx, self.geometry[r], self.boundary[r])
-    
+        #for r in self.geometry.keys():
+        #    self.geometry[r]= self.init_room(dx, self.geometry[r], self.boundary[r])
+    """
     def init_room(self, dx, dimensions, bound = [15,15,15,15]):
         x = arange(0, dimensions[1],dx) 
         y = arange(0, dimensions[0],dx)
@@ -41,6 +41,7 @@ class Problem:
             room[i,0] = bound[3]
              
         return room 
+    """
     
     def plot(self):
         fig, ax = plt.subplots()

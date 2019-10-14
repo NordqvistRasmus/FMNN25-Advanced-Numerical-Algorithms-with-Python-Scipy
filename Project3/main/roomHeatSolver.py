@@ -11,7 +11,7 @@ import numpy as np
 from scipy.linalg import block_diag, solve
 from Problem import Problem
 
-class roomHeatSolver:
+class roomHeatSolver():
     
     def __init__(self, problem):
         self.problem = problem

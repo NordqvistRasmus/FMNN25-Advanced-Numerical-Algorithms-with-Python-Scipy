@@ -10,20 +10,25 @@ from numpy import *
 from matplotlib.pyplot import *
 from scipy.linalg import lu_factor, lu_solve
 
+from Problem import Problem
+from roomHeatSolver import roomHeatSolver
 
-class smallRoomHeatSolver:
+class smallRoomHeatSolver():
     
-    def __init__(self, interface_dir, dx, interface_vals,
-                 geom=(1,1), heater=40, normal_wall=15):
+    def __init__(self, interface_dir, interface_vals, problem, room):
+     #            geom=(1,1), heater=40, normal_wall=15):
+        #super().__init__(problem)
         
         self.interface_dir = interface_dir
         self.interface_vals = interface_vals
-        self.x_len = geom[0]
-        self.y_len = geom[1]
-        self.heater = heater
-        self.normal_wall = normal_wall
-        self.n_rows = round(self.x_len/dx) -1 # Defines the number of rows in the coordinate mesh.
-        self.n_cols = round(self.y_len/dx)    # Defines the number of columns in the coordinate mesh.  
+        #Change with global geometry
+        self.x_len = problem.geometry[room][0]
+        self.y_len = problem.geometry[room][1]
+        self.dx = problem.dx
+        self.heater = problem.heater
+        self.normal_wall = problem.wall
+        self.n_rows = round(self.x_len/self.dx) -1 # Defines the number of rows in the coordinate mesh.
+        self.n_cols = round(self.y_len/self.dx)    # Defines the number of columns in the coordinate mesh.  
         self.size = (self.n_rows, self.n_cols)
         self.N_elements = self.n_rows*self.n_cols # Number of points in which to calculate u 
         BC, neu_ind = self._make_boundaries()
@@ -91,7 +96,10 @@ class smallRoomHeatSolver:
     
     
 if __name__ == '__main__':
-    s = smallRoomHeatSolver('east', 1/4, array([20,20,20]))
+    p = Problem(1/4)
+    print(p.geometry)
+    interface_vals = array([20,20,20])
+    s = smallRoomHeatSolver('east', interface_vals, p, 'room1')
     #BC, neumann_ind = s._make_boundaries()
     A=s._make_matrix()
         
