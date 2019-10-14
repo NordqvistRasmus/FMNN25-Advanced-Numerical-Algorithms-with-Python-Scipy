@@ -64,7 +64,7 @@ class largeRoomHeatSolver(roomHeatSolver):
     """
     Calculates the derivates along interface1 or interface2 and returns them as a vector. 
     """
-    def getNeumannBC(self, interface):
+    def getDerives(self, interface):
         n = self.n
         u = self.u
 
@@ -129,13 +129,13 @@ class largeRoomHeatSolver(roomHeatSolver):
         self.u = solve(A, b)
         return self.u
 
-p = Problem(1/5)
-solver = largeRoomHeatSolver(p)
-solver.solveRoom()
-print(solver.getNeumannBC("interface2"))
-print(solver.getBound("interface1"))
-
-#u.reshape(2*n-1, n-1)
+if __name__ == "__main__":
+    p = Problem(1/5)
+    solver = largeRoomHeatSolver(p)
+    solver.solveRoom()
+    print(solver.getDerives("interface2"))
+    print(solver.getBound("interface1"))
+    #u.reshape(2*n-1, n-1)
 
 
 
