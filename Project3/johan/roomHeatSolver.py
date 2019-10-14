@@ -24,6 +24,9 @@ class roomHeatSolver:
     def getBound(self):
         pass
     
+    def getDerives(self):
+        pass
+    
     def updateBound(self):
         pass
     
