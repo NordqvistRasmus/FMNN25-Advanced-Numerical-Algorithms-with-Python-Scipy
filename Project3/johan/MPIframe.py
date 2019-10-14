@@ -10,7 +10,11 @@ from  pylab import *
 
 from mpi4py import MPI
 from roomHeatSolver import roomHeatSolver
+from smallRoomHeatSolver import smallRoomHeatSolver
+from largeRoomHeatSolver import largeRoomHeatSolver
 from Problem import Problem 
+import seaborn as sns; sns.set()
+
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -50,3 +54,16 @@ for i in range(nbrits):
 A = room1.getMatrix()
 B = room2.getMatrix()
 C = room3.getMatrix()
+
+fig, ax = plt.subplots()
+
+upper_left = zeros((A.shape[0],A.shape[1]))
+lower_right = zeros((C.shape[0],C.shape[1]))
+upper_left.fill(None)
+lower_right.fill(None)
+
+splitted_room2 = vsplit(array(B), 2)
+total = block([[upper_left, splitted_room2[0], C, A, splitted_room2[1], lower_right]])
+ax = sns.heatmap(total, cmap = "YlOrRd")
+plt.show()
+
