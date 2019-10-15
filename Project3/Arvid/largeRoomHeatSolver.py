@@ -23,6 +23,7 @@ class largeRoomHeatSolver(roomHeatSolver):
         self.BC_window = problem.window
         self.n = int(1/self.dx)
         """
+        self.problem = problem
         self.interfaceArray1 = 20*ones(self.n-1) # Interface 1 and 2 start with 20 degress. 
         self.interfaceArray2 = 20*ones(self.n-1)
         self.u = None
@@ -62,16 +63,27 @@ class largeRoomHeatSolver(roomHeatSolver):
     def getMatrix(self):
         if self.u is None:
             raise TypeError('U is not defined')
-        room = zeros([2*self.n+1,self.n+1])
         
+        room = np.zeros((2*self.n+1, self.n+1))
+        size = room.shape
+        print(f'room is {room}', '\n', f'it has size {size} ')
         u_matrix = self.u.reshape(2*self.n -1, self.n - 1)
-
+        print(u_matrix)
         L = array([*self.interfaceArray1, *self.wall*ones(self.n)])
         R = array([*self.wall*ones(self.n), *self.interfaceArray2])
-        L = L.reshape(len(L), 1)
-        R = R.reshape(len(R), 1)
-
+        print(L)
+        print(R)
+        #L = L.reshape(len(L),1)
+        #R = R.reshape(len(R),1)
+        print(L)
+        print(R)
         
+        room[0, :] = self.problem.heater*ones(self.n+1)
+        room[1:-1, 0] = L
+        room[1:-1, 1:-1]=u_matrix
+        room[1:-1, -1] = R
+        room[-1, :] = self.problem.wall*ones(self.n+1)
+
         return room
 
 
