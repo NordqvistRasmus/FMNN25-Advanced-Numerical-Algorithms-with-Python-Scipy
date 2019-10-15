@@ -7,13 +7,14 @@ Created on Fri Oct 11 13:02:49 2019
 """
 #from  scipy import *
 #from  pylab import 
-from numpy import zeros, array, diag, ones
+from numpy import zeros, array, diag, ones, vsplit, block
 
 from mpi4py import MPI
 from roomHeatSolver import roomHeatSolver
 from smallRoomHeatSolver import smallRoomHeatSolver
 from largeRoomHeatSolver import largeRoomHeatSolver
 from Problem import Problem 
+import matplotlib.pyplot as plt
 import seaborn as sns; sns.set()
 
 
@@ -24,51 +25,96 @@ dx = (1/20)
 n = 20
 
 prob = Problem(dx)
-room1 = smallRoomHeatSolver( 'east', zeros(n - 1), prob,"room1")
+room1 = smallRoomHeatSolver('west', zeros(n - 1), prob, "room1")
 room2 = largeRoomHeatSolver(prob)
-room3 = smallRoomHeatSolver('west', zeros(n - 1), prob,"room3")
+room3 = smallRoomHeatSolver('east', zeros(n - 1), prob, "room3")
 
-nbrits = 2 #hur många gånger vi vill iterera
+omega  = 0.8
+bound1_old = 20*ones(n-1)
+bound3_old = 20*ones(n-1)
+
+nbrits = 5 #hur många gånger vi vill iterera
 
 for i in range(nbrits):
     if rank == 0: #room2
+        print("Rank is 0")
         if(i==0): #first iteration
             room2.solveLargeRoom()
         else:
-            comm.recv(bound1, source = 1)
-            comm.recv(bound3, source = 2)
+            bound1 = comm.recv(source = 1)
+            bound3 = comm.recv(source = 2)
             room2.updateBound('interface1', bound1)
             room2.updateBound('interface2', bound3)
             room2.solveLargeRoom()
+            #print('Room2: {}'.format(room2.getMatrix()))
+            
         bounds_r1 = room2.getDerives('interface1')
         bounds_r3 = room2.getDerives('interface2')
-        comm.send(bounds_r1, source = 1)
-        comm.send(bounds_r3, source = 2)
+        comm.send(bounds_r1, dest = 1)
+        comm.send(bounds_r3, dest = 2)
     
-    if rank == 1  and i != 0: #room1
-        comm.recv(bounds_r1, source = 0)
+    if rank == 1: #room1
+        print("Rank is 1")
+        bounds_r1 = comm.recv(source = 0)
+       
         u, bound1 = room1.solve_system(bounds_r1)
-        comm.send(bound1, source = 0)
+        bound1 = omega*bound1 +(1-omega)*bound1_old
+        comm.send(bound1, dest = 0)
+        bound1_old = bound1
+        #print('Room1: {}'.format(room1.getMatrix()))
     
-    if rank == 2  and i != 0: #room3
-        comm.recv(bounds_r3, source = 0)
+    if rank == 2: #room3
+        print("Rank is 2")
+        bounds_r3 = comm.recv(source = 0)
+       
+        #print('bounds_r3: {}'.format(bounds_r3))
         u, bound3 = room3.solve_system(bounds_r3)
-        comm.send(bound3, source = 0)
-        
-#A = room1.getMatrix()
-B = room2.getMatrix()
-""" #C = room3.getMatrix()
+        bound3 = omega*bound3 + (1-omega)*bound3_old
+        bound3_old = bound3
+        comm.send(bound3, dest = 0)
+        #print('Room3: '.format(room3.getMatrix()))
+    if(i == nbrits-1):
+        if rank == 0:
+            B = room2.getMatrix()
+            comm.send(B, dest=3, tag=2)
+        if rank == 1:
+            A = room1.getMatrix()
+            comm.send(A, dest=3, tag=1)
+        if rank == 2:
+            C = room3.getMatrix()
+            comm.send(C, dest=3, tag=3)
+if rank == 3:
+    print("Rank is 3")
+    A = comm.recv(source = 1, tag=1)
+    C = comm.recv(source = 2, tag=3)
+    B = comm.recv(source=0, tag=2)
+    #print(A, "is room 1")
+    #print(B, "is room 2")
+    #print(C, "is room 3")
+    
 
-fig, ax = plt.subplots()
+    fig, ax = plt.subplots()
 
-upper_left = zeros((A.shape[0],A.shape[1]))
-lower_right = zeros((C.shape[0],C.shape[1]))
-upper_left.fill(None)
-lower_right.fill(None)
+    upper_left = zeros([A.shape[0] - 1, A.shape[1]])
+    lower_right = zeros([C.shape[0] - 1,C.shape[1]])
+    upper_left.fill(None)
+    lower_right.fill(None)
+    
 
-splitted_room2 = vsplit(array(B), 2)
-total = block([[upper_left, splitted_room2[0], C, A, splitted_room2[1], lower_right]])
-ax = sns.heatmap(total, cmap = "YlOrRd")
-plt.show()
+    First = block([[upper_left],[A]])
+    Second = B
+    Third = block([[C], [lower_right]])
+    print(First)
+    print(B)
+    print(Third)
+    total = block([First, Second, Third])
+    print('-------------------------------------------------')
+    print(total)
+    #splitted_room2 = vsplit(array(B), 2)
+    #total = block([[upper_left, splitted_room2[0], C, A, splitted_room2[1], lower_right]])
+    ax = sns.heatmap(total, cmap = "YlOrRd")
+    plt.show()
+    
+    
+    
 
- """

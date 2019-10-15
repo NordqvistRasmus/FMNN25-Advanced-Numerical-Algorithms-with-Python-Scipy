@@ -4,7 +4,7 @@ Created on Wed Oct  9 20:16:48 2019
 @author: Mattias Lundström1
 """
 #from mpi4py import MPI
-from numpy import diag, ones, zeros, array
+from numpy import diag, ones, zeros, array, block
 import numpy as np
 from scipy.linalg import block_diag, solve
 from Problem import Problem
@@ -23,6 +23,7 @@ class largeRoomHeatSolver(roomHeatSolver):
         self.BC_window = problem.window
         self.n = int(1/self.dx)
         """
+        self.problem = problem
         self.interfaceArray1 = 20*ones(self.n-1) # Interface 1 and 2 start with 20 degress. 
         self.interfaceArray2 = 20*ones(self.n-1)
         self.u = None
@@ -60,7 +61,25 @@ class largeRoomHeatSolver(roomHeatSolver):
             raise ValueError("Can only update boundaries at interface1 or interface2.")
         
     def getMatrix(self):
-        return self.u.reshape(2*self.n -1, self.n - 1)
+        if self.u is None:
+            raise TypeError('U is not defined')
+        
+        room = np.zeros((2*self.n+1, self.n+1))
+        size = room.shape
+        #print(f'room is {room}', '\n', f'it has size {size} ')
+        u_matrix = self.u.reshape(2*self.n -1, self.n - 1)
+        #print(u_matrix)
+        R = array([*self.interfaceArray2, *self.wall*ones(self.n)])
+        L = array([*self.wall*ones(self.n), *self.interfaceArray1])
+               
+        room[0, :] = self.problem.heater*ones(self.n+1)
+        room[1:-1, 0] = L
+        room[1:-1, 1:-1]=u_matrix
+        room[1:-1, -1] = R
+        room[-1, :] = self.problem.window*ones(self.n+1)
+
+        return room
+
 
     """
     Calculates the derivates along interface1 or interface2 and returns them as a vector. 
@@ -125,18 +144,18 @@ class largeRoomHeatSolver(roomHeatSolver):
 
         #print(b.reshape(2*n-1, n-1)) #prints boundaries influence on each node points
 
-        A = A/(self.dx**2) 
-        b = b/(self.dx**2)
+        A = A*(1/(self.dx**2)) 
+        b = b*(1/(self.dx**2))
         self.u = solve(A, b)
+        print("Room2 solved")
         return self.u
 
 if __name__ == '__main__':
-    p = Problem(1/3)
+    p = Problem(1/5)
     solver = largeRoomHeatSolver(p)
     solver.solveLargeRoom()
-    print(solver.getDerives("interface2"))
-    print(solver.getBound("interface1"))
-    solver.getMatrix()
+    #print(solver.getDerives("interface2"))
+    #print(solver.getMatrix())
 
 #u.reshape(2*n-1, n-1)
 
