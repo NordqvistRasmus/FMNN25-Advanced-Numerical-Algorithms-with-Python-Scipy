@@ -66,23 +66,17 @@ class largeRoomHeatSolver(roomHeatSolver):
         
         room = np.zeros((2*self.n+1, self.n+1))
         size = room.shape
-        print(f'room is {room}', '\n', f'it has size {size} ')
+        #print(f'room is {room}', '\n', f'it has size {size} ')
         u_matrix = self.u.reshape(2*self.n -1, self.n - 1)
-        print(u_matrix)
-        L = array([*self.interfaceArray1, *self.wall*ones(self.n)])
-        R = array([*self.wall*ones(self.n), *self.interfaceArray2])
-        print(L)
-        print(R)
-        #L = L.reshape(len(L),1)
-        #R = R.reshape(len(R),1)
-        print(L)
-        print(R)
-        
+        #print(u_matrix)
+        R = array([*self.interfaceArray2, *self.wall*ones(self.n)])
+        L = array([*self.wall*ones(self.n), *self.interfaceArray1])
+               
         room[0, :] = self.problem.heater*ones(self.n+1)
         room[1:-1, 0] = L
         room[1:-1, 1:-1]=u_matrix
         room[1:-1, -1] = R
-        room[-1, :] = self.problem.wall*ones(self.n+1)
+        room[-1, :] = self.problem.window*ones(self.n+1)
 
         return room
 
@@ -161,7 +155,7 @@ if __name__ == '__main__':
     solver = largeRoomHeatSolver(p)
     solver.solveLargeRoom()
     #print(solver.getDerives("interface2"))
-    print(solver.getMatrix())
+    #print(solver.getMatrix())
 
 #u.reshape(2*n-1, n-1)
 

@@ -25,15 +25,15 @@ dx = (1/20)
 n = 20
 
 prob = Problem(dx)
-room1 = smallRoomHeatSolver( 'east', zeros(n - 1), prob,"room1")
+room1 = smallRoomHeatSolver('west', zeros(n - 1), prob, "room1")
 room2 = largeRoomHeatSolver(prob)
-room3 = smallRoomHeatSolver('west', zeros(n - 1), prob,"room3")
+room3 = smallRoomHeatSolver('east', zeros(n - 1), prob, "room3")
 
 omega  = 0.8
 bound1_old = 20*ones(n-1)
 bound3_old = 20*ones(n-1)
 
-nbrits = 2 #hur många gånger vi vill iterera
+nbrits = 5 #hur många gånger vi vill iterera
 
 for i in range(nbrits):
     if rank == 0: #room2
@@ -67,7 +67,7 @@ for i in range(nbrits):
         print("Rank is 2")
         bounds_r3 = comm.recv(source = 0)
        
-        print('bounds_r3: {}'.format(bounds_r3))
+        #print('bounds_r3: {}'.format(bounds_r3))
         u, bound3 = room3.solve_system(bounds_r3)
         bound3 = omega*bound3 + (1-omega)*bound3_old
         bound3_old = bound3
@@ -84,19 +84,37 @@ for i in range(nbrits):
             C = room3.getMatrix()
             comm.send(C, dest=3, tag=3)
 if rank == 3:
+    print("Rank is 3")
     A = comm.recv(source = 1, tag=1)
     C = comm.recv(source = 2, tag=3)
     B = comm.recv(source=0, tag=2)
+    #print(A, "is room 1")
+    #print(B, "is room 2")
+    #print(C, "is room 3")
+    
+
     fig, ax = plt.subplots()
 
-    upper_left = zeros((A.shape[0],A.shape[1]))
-    lower_right = zeros((C.shape[0],C.shape[1]))
+    upper_left = zeros([A.shape[0] - 1, A.shape[1]])
+    lower_right = zeros([C.shape[0] - 1,C.shape[1]])
     upper_left.fill(None)
     lower_right.fill(None)
+    
 
-    splitted_room2 = vsplit(array(B), 2)
-    total = block([[upper_left, splitted_room2[0], C, A, splitted_room2[1], lower_right]])
+    First = block([[upper_left],[A]])
+    Second = B
+    Third = block([[C], [lower_right]])
+    print(First)
+    print(B)
+    print(Third)
+    total = block([First, Second, Third])
+    print('-------------------------------------------------')
+    print(total)
+    #splitted_room2 = vsplit(array(B), 2)
+    #total = block([[upper_left, splitted_room2[0], C, A, splitted_room2[1], lower_right]])
     ax = sns.heatmap(total, cmap = "YlOrRd")
     plt.show()
+    
+    
     
 
