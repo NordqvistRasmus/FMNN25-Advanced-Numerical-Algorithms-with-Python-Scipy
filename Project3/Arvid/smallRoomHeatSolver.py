@@ -94,9 +94,17 @@ class smallRoomHeatSolver():
         return u, interface_vals
         
     def getMatrix(self):
-        if self.solution is None:
-            raise TypeError('U is not defined')
-        return self.solution.reshape(self.size)
+        room = zeros(self.n_rows+2, self.n_cols+1)
+        if self.interface_dir == 'east':
+            room[1:-2,1:-1] = self.solution.reshape(self.size)
+            room[0, :] = self.normal_wall*ones(self.n_cols+1)
+            room[:, 0] = self.heater*ones(self.n_rows+2)
+            room[-1, :] = self.normal_wall*ones(self.n_cols+1) 
+        elif self.interface_dir == 'west':
+            room[1:-2, 0:-2] = self.solution.reshape(self.size)
+            room[0,:] = room[-1,:] = self.normal_wall*ones(self.n_cols+1)
+            room[-1, :] = self.heater*ones(self.n_rows+2)
+        return room
     
     
 if __name__ == '__main__':
