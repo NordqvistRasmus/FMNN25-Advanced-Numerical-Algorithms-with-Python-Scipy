@@ -41,7 +41,7 @@ class Problem:
             room[i,0] = bound[3]
              
         return room 
-    """
+    
     
     def plot(self):
         fig, ax = plt.subplots()
@@ -58,10 +58,10 @@ class Problem:
         ax = sns.heatmap(total, cmap = "YlOrRd")
         ax.invert_yaxis()
         plt.show()
-        
+    """   
 if __name__ == '__main__':
     p = Problem(0.1)
-    p.plot()
+    #p.plot()
     #print('room1',p.geometry['room1'])
     #print('room2',p.geometry['room2'])
     #print('room3',p.geometry['room3'])

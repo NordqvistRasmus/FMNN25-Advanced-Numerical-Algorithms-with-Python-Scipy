@@ -7,7 +7,7 @@ Created on Fri Oct 11 13:02:49 2019
 """
 #from  scipy import *
 #from  pylab import 
-from numpy import zeros, array, diag, ones
+from numpy import zeros, array, diag, ones, vsplit, block
 
 from mpi4py import MPI
 from roomHeatSolver import roomHeatSolver
@@ -37,6 +37,7 @@ nbrits = 2 #hur många gånger vi vill iterera
 
 for i in range(nbrits):
     if rank == 0: #room2
+        print("Rank is 0")
         if(i==0): #first iteration
             room2.solveLargeRoom()
         else:
@@ -53,7 +54,9 @@ for i in range(nbrits):
         comm.send(bounds_r3, dest = 2)
     
     if rank == 1: #room1
+        print("Rank is 1")
         bounds_r1 = comm.recv(source = 0)
+       
         u, bound1 = room1.solve_system(bounds_r1)
         bound1 = omega*bound1 +(1-omega)*bound1_old
         comm.send(bound1, dest = 0)
@@ -61,28 +64,39 @@ for i in range(nbrits):
         #print('Room1: {}'.format(room1.getMatrix()))
     
     if rank == 2: #room3
+        print("Rank is 2")
         bounds_r3 = comm.recv(source = 0)
+       
         print('bounds_r3: {}'.format(bounds_r3))
         u, bound3 = room3.solve_system(bounds_r3)
         bound3 = omega*bound3 + (1-omega)*bound3_old
         bound3_old = bound3
         comm.send(bound3, dest = 0)
         #print('Room3: '.format(room3.getMatrix()))
-    A = room1.getMatrix()
-        
-A = room1.getMatrix()
-B = room2.getMatrix()
-C = room3.getMatrix()
+    if(i == nbrits-1):
+        if rank == 0:
+            B = room2.getMatrix()
+            comm.send(B, dest=3, tag=2)
+        if rank == 1:
+            A = room1.getMatrix()
+            comm.send(A, dest=3, tag=1)
+        if rank == 2:
+            C = room3.getMatrix()
+            comm.send(C, dest=3, tag=3)
+if rank == 3:
+    A = comm.recv(source = 1, tag=1)
+    C = comm.recv(source = 2, tag=3)
+    B = comm.recv(source=0, tag=2)
+    fig, ax = plt.subplots()
 
-fig, ax = plt.subplots()
+    upper_left = zeros((A.shape[0],A.shape[1]))
+    lower_right = zeros((C.shape[0],C.shape[1]))
+    upper_left.fill(None)
+    lower_right.fill(None)
 
-upper_left = zeros((A.shape[0],A.shape[1]))
-lower_right = zeros((C.shape[0],C.shape[1]))
-upper_left.fill(None)
-lower_right.fill(None)
-
-splitted_room2 = vsplit(array(B), 2)
-total = block([[upper_left, splitted_room2[0], C, A, splitted_room2[1], lower_right]])
-ax = sns.heatmap(total, cmap = "YlOrRd")
-plt.show()
+    splitted_room2 = vsplit(array(B), 2)
+    total = block([[upper_left, splitted_room2[0], C, A, splitted_room2[1], lower_right]])
+    ax = sns.heatmap(total, cmap = "YlOrRd")
+    plt.show()
+    
 

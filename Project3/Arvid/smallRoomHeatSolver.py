@@ -94,7 +94,8 @@ class smallRoomHeatSolver():
         return u, interface_vals
         
     def getMatrix(self):
-        
+        if self.solution is None:
+            raise TypeError('U is not defined')
         return self.solution.reshape(self.size)
     
     

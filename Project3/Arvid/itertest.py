@@ -5,9 +5,9 @@ Created on Mon Oct 14 20:56:07 2019
 
 @author: Arvid
 """
-from scipy import *
-from matplotlib.pyplot import *
-from numpy import zeros, array, diag, ones
+#from scipy import *
+import matplotlib.pyplot as plt
+from numpy import zeros, array, diag, ones, vsplit, block
 
 from mpi4py import MPI
 from roomHeatSolver import roomHeatSolver

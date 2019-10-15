@@ -4,7 +4,7 @@ Created on Wed Oct  9 20:16:48 2019
 @author: Mattias Lundström1
 """
 #from mpi4py import MPI
-from numpy import diag, ones, zeros, array
+from numpy import diag, ones, zeros, array, block
 import numpy as np
 from scipy.linalg import block_diag, solve
 from Problem import Problem
@@ -60,7 +60,20 @@ class largeRoomHeatSolver(roomHeatSolver):
             raise ValueError("Can only update boundaries at interface1 or interface2.")
         
     def getMatrix(self):
-        return self.u.reshape(2*self.n -1, self.n - 1)
+        if self.u is None:
+            raise TypeError('U is not defined')
+        room = zeros([2*self.n+1,self.n+1])
+        
+        u_matrix = self.u.reshape(2*self.n -1, self.n - 1)
+
+        L = array([*self.interfaceArray1, *self.wall*ones(self.n)])
+        R = array([*self.wall*ones(self.n), *self.interfaceArray2])
+        L = L.reshape(len(L), 1)
+        R = R.reshape(len(R), 1)
+
+        
+        return room
+
 
     """
     Calculates the derivates along interface1 or interface2 and returns them as a vector. 
@@ -126,17 +139,17 @@ class largeRoomHeatSolver(roomHeatSolver):
         #print(b.reshape(2*n-1, n-1)) #prints boundaries influence on each node points
 
         A = A*(1/(self.dx**2)) 
-        #b = b*(1/(self.dx**2))
+        b = b*(1/(self.dx**2))
         self.u = solve(A, b)
+        print("Room2 solved")
         return self.u
 
 if __name__ == '__main__':
-    p = Problem(1/3)
+    p = Problem(1/5)
     solver = largeRoomHeatSolver(p)
     solver.solveLargeRoom()
-    print(solver.getDerives("interface2"))
-    print(solver.getBound("interface1"))
-    u = solver.getMatrix()
+    #print(solver.getDerives("interface2"))
+    print(solver.getMatrix())
 
 #u.reshape(2*n-1, n-1)
 
