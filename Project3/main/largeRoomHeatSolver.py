@@ -1,29 +1,23 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Oct  9 20:16:48 2019
-@author: Mattias Lundström1
+@author: Mattias Lundström, Arvid Rolander, Pontus Nordqvist, Johan Liljegren, Antonio Alas
 """
-#from mpi4py import MPI
+from mpi4py import MPI
 from numpy import diag, ones, zeros, array, block
 import numpy as np
 from scipy.linalg import block_diag, solve
 from Problem import Problem
 
-from roomHeatSolver import roomHeatSolver
-
-class largeRoomHeatSolver(roomHeatSolver):
+class LargeRoomHeatSolver:
     
     def __init__(self, problem):
-        super().__init__(problem)
-        """
         self.problem = problem
         self.dx = problem.dx
-        self.BC_normal = problem.wall
-        self.BC_heater = problem.heater
-        self.BC_window = problem.window
         self.n = int(1/self.dx)
-        """
-        self.problem = problem
+        self.heater = problem.heater
+        self.wall = problem.wall
+        self.window = problem.window
         self.interfaceArray1 = 20*ones(self.n-1) # Interface 1 and 2 start with 20 degress. 
         self.interfaceArray2 = 20*ones(self.n-1)
         self.u = None
@@ -66,9 +60,7 @@ class largeRoomHeatSolver(roomHeatSolver):
         
         room = np.zeros((2*self.n+1, self.n+1))
         size = room.shape
-        #print(f'room is {room}', '\n', f'it has size {size} ')
         u_matrix = self.u.reshape(2*self.n -1, self.n - 1)
-        #print(u_matrix)
         R = array([*self.interfaceArray2, *self.wall*ones(self.n)])
         L = array([*self.wall*ones(self.n), *self.interfaceArray1])
                
@@ -80,11 +72,10 @@ class largeRoomHeatSolver(roomHeatSolver):
 
         return room
 
-
-    """
-    Calculates the derivates along interface1 or interface2 and returns them as a vector. 
-    """
     def getDerives(self, interface):
+        """
+        Calculates the derivates along interface1 or interface2 and returns them as a vector. 
+        """
         n = self.n
         u = self.u
 
@@ -104,13 +95,14 @@ class largeRoomHeatSolver(roomHeatSolver):
         else:
             raise ValueError('Interface not defined properly. Choose interface1 or interface2') 
 
-    """
-    Solves the large room with a linear system using interfaceArray1 and interfaceArray2 values along the room interfaces.
-    Wall, heater and window temperatures are defined in the problem class. 
 
-    Returns u, the solved inner room temperaturesm as a vector which can be reshaped back into a room matrix.
-    """
     def solveLargeRoom(self):
+        """
+        Solves the large room with a linear system using interfaceArray1 and interfaceArray2 values along the room interfaces.
+        Wall, heater and window temperatures are defined in the problem class. 
+
+        Returns u, the solved inner room temperaturesm as a vector which can be reshaped back into a room matrix.
+        """
         n = self.n
 
         A1 = diag(-4*ones(n-1)) + diag(ones(n-2), 1) + diag(ones(n-2), -1) 
@@ -142,22 +134,19 @@ class largeRoomHeatSolver(roomHeatSolver):
         # Collect dirichlet boundry conditions in b, then solve Au = b
         b = - BC_N - BC_S - BC_W - BC_E
 
-        #print(b.reshape(2*n-1, n-1)) #prints boundaries influence on each node points
-
         A = A*(1/(self.dx**2)) 
         b = b*(1/(self.dx**2))
         self.u = solve(A, b)
-        print("Room2 solved")
+        #print(self.u)
         return self.u
 
 if __name__ == '__main__':
     p = Problem(1/5)
-    solver = largeRoomHeatSolver(p)
+    solver = LargeRoomHeatSolver(p)
     solver.solveLargeRoom()
     #print(solver.getDerives("interface2"))
     #print(solver.getMatrix())
 
-#u.reshape(2*n-1, n-1)
 
 
 

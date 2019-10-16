@@ -13,15 +13,12 @@ from scipy.linalg import lu_factor, lu_solve
 from Problem import Problem
 
 
-class smallRoomHeatSolver():
+class SmallRoomHeatSolver:
     
     def __init__(self, interface_dir, interface_vals, problem, room):
-     #            geom=(1,1), heater=40, normal_wall=15):
-        #super().__init__(problem)
         
         self.interface_dir = interface_dir
         self.interface_vals = interface_vals
-        #Change with global geometry
         self.x_len = problem.geometry[room][0]
         self.y_len = problem.geometry[room][1]
         self.dx = problem.dx
@@ -112,7 +109,7 @@ if __name__ == '__main__':
     p = Problem(1/4)
     print(p.geometry)
     interface_vals = array([20,20,20])
-    s = smallRoomHeatSolver('east', interface_vals, p, 'room1')
+    s = SmallRoomHeatSolver('east', interface_vals, p, 'room1')
     #BC, neumann_ind = s._make_boundaries()
     A=s._make_matrix()
     s.solve_system(interface_vals)

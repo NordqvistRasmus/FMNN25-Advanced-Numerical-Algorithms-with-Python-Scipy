@@ -3,16 +3,14 @@
 """
 Created on Fri Oct 11 13:02:49 2019
 
-@author: johanliljegren
+@author: Mattias Lundström, Arvid Rolander, Pontus Nordqvist, Johan Liljegren, Antonio Alas
 """
-#from  scipy import *
-#from  pylab import 
 from numpy import zeros, array, diag, ones, vsplit, block
 
 from mpi4py import MPI
 from roomHeatSolver import roomHeatSolver
-from smallRoomHeatSolver import smallRoomHeatSolver
-from largeRoomHeatSolver import largeRoomHeatSolver
+from smallRoomHeatSolver import SmallRoomHeatSolver
+from largeRoomHeatSolver import LargeRoomHeatSolver
 from Problem import Problem 
 import matplotlib.pyplot as plt
 import seaborn as sns; sns.set()
@@ -25,9 +23,9 @@ dx = (1/20)
 n = 20
 
 prob = Problem(dx)
-room1 = smallRoomHeatSolver('west', zeros(n - 1), prob, "room1")
-room2 = largeRoomHeatSolver(prob)
-room3 = smallRoomHeatSolver('east', zeros(n - 1), prob, "room3")
+room1 = SmallRoomHeatSolver('east', zeros(n - 1), prob, "room1")
+room2 = LargeRoomHeatSolver(prob)
+room3 = SmallRoomHeatSolver('west', zeros(n - 1), prob, "room3")
 
 omega  = 0.8
 bound1_old = 20*ones(n-1)
@@ -84,15 +82,11 @@ for i in range(nbrits):
             C = room3.getMatrix()
             comm.send(C, dest=3, tag=3)
 if rank == 3:
-    print("Rank is 3")
     A = comm.recv(source = 1, tag=1)
     C = comm.recv(source = 2, tag=3)
     B = comm.recv(source=0, tag=2)
-    #print(A, "is room 1")
-    #print(B, "is room 2")
-    #print(C, "is room 3")
-    
 
+    
     fig, ax = plt.subplots()
 
     upper_left = zeros([A.shape[0] - 1, A.shape[1]])
@@ -110,9 +104,8 @@ if rank == 3:
     total = block([First, Second, Third])
     print('-------------------------------------------------')
     print(total)
-    #splitted_room2 = vsplit(array(B), 2)
-    #total = block([[upper_left, splitted_room2[0], C, A, splitted_room2[1], lower_right]])
     ax = sns.heatmap(total, cmap = "YlOrRd")
+    ax.invert_yaxis()
     plt.show()
     
     
