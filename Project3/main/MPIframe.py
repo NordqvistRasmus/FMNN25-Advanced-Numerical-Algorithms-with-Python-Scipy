@@ -23,9 +23,9 @@ dx = (1/20)
 n = 20
 
 prob = Problem(dx)
-room1 = SmallRoomHeatSolver('east', zeros(n - 1), prob, "room1")
+room1 = SmallRoomHeatSolver('east', zeros(n - 1), prob, 'room1')
 room2 = LargeRoomHeatSolver(prob)
-room3 = SmallRoomHeatSolver('west', zeros(n - 1), prob, "room3")
+room3 = SmallRoomHeatSolver('west', zeros(n - 1), prob, 'room3')
 
 omega  = 0.8
 bound1_old = 20*ones(n-1)

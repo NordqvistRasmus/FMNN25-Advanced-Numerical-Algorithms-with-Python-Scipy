@@ -9,6 +9,20 @@ import matplotlib.pyplot as plt
 import seaborn as sns; sns.set()
 
 class Problem:
+    """
+    Problem class for defining a problem.
+    
+    ...
+    
+    Attributes
+    ----------
+        dx: Mesh width.
+        wall: Boundary value of wall. Defualts to 15.
+        heater: Boundary value of heater. Defualts to 40.
+        window: Boundary value of window. Defualts to 5. 
+        geometry: Dictionary were keys are the rooms and values their dimension.
+        boundary: Dictionary were keys are the rooms and values a list of boundary values.
+    """
     
     def  __init__(self, dx, wall = 15, heater = 40, window = 5):
         self.dx = dx
@@ -42,5 +56,5 @@ class Problem:
        
 if __name__ == '__main__':
     p = Problem(0.1)
-    p.plot()
+    #p.plot()
         
