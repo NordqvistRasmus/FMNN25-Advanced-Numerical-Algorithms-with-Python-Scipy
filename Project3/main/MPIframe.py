@@ -8,7 +8,7 @@ Created on Fri Oct 11 13:02:49 2019
 from numpy import zeros, array, diag, ones, vsplit, block
 
 from mpi4py import MPI
-from roomHeatSolver import roomHeatSolver
+#from roomHeatSolver import roomHeatSolver
 from smallRoomHeatSolver import SmallRoomHeatSolver
 from largeRoomHeatSolver import LargeRoomHeatSolver
 from Problem import Problem 
@@ -31,7 +31,7 @@ omega  = 0.8
 bound1_old = 20*ones(n-1)
 bound3_old = 20*ones(n-1)
 
-nbrits = 5 #hur många gånger vi vill iterera
+nbrits = 10 #hur många gånger vi vill iterera
 
 for i in range(nbrits):
     if rank == 0: #room2
@@ -105,7 +105,7 @@ if rank == 3:
     print('-------------------------------------------------')
     print(total)
     ax = sns.heatmap(total, cmap = "YlOrRd")
-    ax.invert_yaxis()
+    #ax.invert_yaxis()
     plt.show()
     
     

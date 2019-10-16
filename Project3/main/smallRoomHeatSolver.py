@@ -93,14 +93,14 @@ class SmallRoomHeatSolver:
     def getMatrix(self):
         room = zeros((self.n_rows+2, self.n_cols+1))
         if self.interface_dir == 'east':
-            room[1:-1,0:-1] = flip(self.solution.reshape(self.size)) #Might have flipped to much heh (mirror flip?)
+            room[1:-1,1:] = self.solution.reshape(self.size) #Might have flipped to much heh (mirror flip?)
             room[0, :] = self.normal_wall*ones(self.n_cols+1)
-            room[:, -1] = self.heater*ones(self.n_rows+2)
+            room[:, 0] = self.heater*ones(self.n_rows+2)
             room[-1, :] = self.normal_wall*ones(self.n_cols+1) 
         elif self.interface_dir == 'west':
-            room[1:-1, 1:] = flip(self.solution.reshape(self.size)) #Might have flipped to much heh (mirror flip?)
+            room[1:-1, :-1] = self.solution.reshape(self.size) #Might have flipped to much heh (mirror flip?)
             room[0,:] = room[-1,:] = self.normal_wall*ones(self.n_cols+1)
-            room[:, 0] = self.heater*ones(self.n_rows+2)
+            room[:, -1] = self.heater*ones(self.n_rows+2)
         print('Complete room is: {}'.format(room))
         return room
     
